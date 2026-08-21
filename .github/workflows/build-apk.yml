@@ -1,15 +1,16 @@
-name: Build Android APK
+name: Build Android APK & Release
 
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
-    name: Build Debug APK
+    name: Build Debug APK & Create Release
     runs-on: ubuntu-latest
 
     steps:
@@ -27,24 +28,43 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Generate Wrapper and Build APK
+      - name: Build Android Debug APK
         run: |
           gradle wrapper --gradle-version 8.9
           chmod +x ./gradlew
           ./gradlew assembleDebug --no-daemon --stacktrace
+          
+          # Rename APK for clean direct download
+          mkdir -p release-apk
+          cp app/build/outputs/apk/debug/*.apk release-apk/ExpensePulse-v1.0.0.apk
 
-      - name: Upload Debug APK Artifact
+      - name: Upload Artifact (Actions Tab)
         uses: actions/upload-artifact@v4
-        if: always()
         with:
           name: ExpensePulse-Debug-APK
-          path: app/build/outputs/apk/debug/*.apk
+          path: release-apk/ExpensePulse-v1.0.0.apk
           retention-days: 30
 
-      - name: Display Build Summary
-        if: success()
-        run: |
-          echo "### 🎉 Android APK Build Successful!" >> $GITHUB_STEP_SUMMARY
-          echo "Download the APK directly from the **Artifacts** section below." >> $GITHUB_STEP_SUMMARY
-          echo "- **App**: ExpensePulse" >> $GITHUB_STEP_SUMMARY
-          echo "- **Type**: Debug APK" >> $GITHUB_STEP_SUMMARY
+      - name: Publish Direct APK to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main'
+        with:
+          tag_name: "v1.0.0"
+          name: "ExpensePulse v1.0.0 (Native Android APK)"
+          body: |
+            ### 📱 ExpensePulse Android APK
+            Native Android Expense Tracker optimized for OnePlus 13R & Android 15/16.
+
+            #### 🚀 Highlights:
+            - **120Hz Pure Canvas Chart**: 7-day spending trend with daily budget limit.
+            - **Interactive Spending Calendar**: Tap any date to inspect total spend and itemized breakdown.
+            - **< 3s Quick Log Pad**: Rapid expense entry with custom large touch keypad.
+            - **Room Database**: Offline-first persistent storage with CSV data export.
+
+            #### 📥 Download & Install:
+            Click **`ExpensePulse-v1.0.0.apk`** below to download directly to your Android device and install!
+          files: release-apk/ExpensePulse-v1.0.0.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
