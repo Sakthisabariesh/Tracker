@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
@@ -38,9 +37,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.antigravity.expensetracker.data.model.Category
 import com.antigravity.expensetracker.data.model.PaymentMode
+import com.antigravity.expensetracker.data.model.TransactionType
 import com.antigravity.expensetracker.ui.components.QuickNumberPad
+import com.antigravity.expensetracker.ui.theme.SafeGreen
+import com.antigravity.expensetracker.ui.theme.SpendingRed
 import com.antigravity.expensetracker.ui.viewmodel.ExpenseEvent
 import com.antigravity.expensetracker.ui.viewmodel.QuickLogDraft
+import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,6 +53,9 @@ fun AddExpenseBottomSheet(
     onEvent: (ExpenseEvent) -> Unit,
     onDismiss: () -> Unit
 ) {
+    val isIncome = draft.type == TransactionType.INCOME
+    val activeColor = if (isIncome) SafeGreen else MaterialTheme.colorScheme.primary
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
@@ -72,59 +78,156 @@ fun AddExpenseBottomSheet(
                 .padding(bottom = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Amount Readout (Large bold currency font)
+            // 1. Transaction Type Segmented Toggle (Expense vs Income)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
+                    .padding(4.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(if (!isIncome) SpendingRed else Color.Transparent)
+                        .clickable { onEvent(ExpenseEvent.OnTypeSelect(TransactionType.EXPENSE)) }
+                        .padding(vertical = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Expense (-)",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = if (!isIncome) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(if (isIncome) SafeGreen else Color.Transparent)
+                        .clickable { onEvent(ExpenseEvent.OnTypeSelect(TransactionType.INCOME)) }
+                        .padding(vertical = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Income (+)",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isIncome) Color.Black else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            // 2. Amount Readout
             val displayAmount = if (draft.amountString.isEmpty()) "0" else draft.amountString
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
-                modifier = Modifier.padding(vertical = 12.dp)
+                modifier = Modifier.padding(vertical = 10.dp)
             ) {
                 Text(
-                    text = "₹",
+                    text = if (isIncome) "+₹" else "₹",
                     style = MaterialTheme.typography.displayMedium,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = activeColor,
                     fontWeight = FontWeight.Black
                 )
-                Spacer(modifier = Modifier.width(6.dp))
+                Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = displayAmount,
                     style = MaterialTheme.typography.displayLarge,
                     color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Black,
-                    fontSize = 42.sp
+                    fontSize = 40.sp
                 )
             }
 
-            // Quick Category Chips
+            // 3. Date Quick Selector (Today vs Yesterday)
+            val today = LocalDate.now()
+            val yesterday = today.minusDays(1)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                val isTodaySelected = draft.date == today
+                val isYesterdaySelected = draft.date == yesterday
+
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(
+                            if (isTodaySelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                            else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                        )
+                        .clickable { onEvent(ExpenseEvent.OnDateSelect(today)) }
+                        .padding(vertical = 6.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Today",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = if (isTodaySelected) FontWeight.Bold else FontWeight.Normal,
+                        color = if (isTodaySelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(
+                            if (isYesterdaySelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                            else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                        )
+                        .clickable { onEvent(ExpenseEvent.OnDateSelect(yesterday)) }
+                        .padding(vertical = 6.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Yesterday",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = if (isYesterdaySelected) FontWeight.Bold else FontWeight.Normal,
+                        color = if (isYesterdaySelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            // 4. Quick Category Chips
+            val activeCategories = if (isIncome) Category.incomeCategories else Category.expenseCategories
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Category.quickLogCategories.forEach { category ->
+                activeCategories.forEach { category ->
                     val isSelected = draft.category == category
                     Row(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(RoundedCornerShape(10.dp))
                             .background(
                                 if (isSelected) category.getColor()
-                                else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+                                else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                             )
                             .clickable { onEvent(ExpenseEvent.OnCategorySelect(category)) }
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                            .padding(horizontal = 10.dp, vertical = 7.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
                             imageVector = category.getIcon(),
                             contentDescription = category.displayName,
                             tint = if (isSelected) Color.White else category.getColor(),
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(16.dp)
                         )
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Spacer(modifier = Modifier.width(5.dp))
                         Text(
                             text = category.displayName,
-                            style = MaterialTheme.typography.labelMedium,
+                            style = MaterialTheme.typography.labelSmall,
                             color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                         )
@@ -132,46 +235,46 @@ fun AddExpenseBottomSheet(
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            // Payment Mode Selector Pills
+            // 5. Payment Mode Chips
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 PaymentMode.entries.forEach { mode ->
                     val isSelected = draft.paymentMode == mode
                     Row(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(10.dp))
+                            .clip(RoundedCornerShape(8.dp))
                             .background(
                                 if (isSelected) MaterialTheme.colorScheme.secondary
-                                else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                                else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
                             )
                             .clickable { onEvent(ExpenseEvent.OnPaymentModeSelect(mode)) }
-                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                            .padding(horizontal = 9.dp, vertical = 5.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
                             imageVector = mode.getIcon(),
                             contentDescription = mode.displayName,
                             tint = if (isSelected) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(14.dp)
                         )
-                        Spacer(modifier = Modifier.width(5.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = mode.displayName,
                             style = MaterialTheme.typography.labelSmall,
                             color = if (isSelected) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                            fontSize = 11.sp
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Optional note / title text field
             OutlinedTextField(
@@ -179,7 +282,7 @@ fun AddExpenseBottomSheet(
                 onValueChange = { onEvent(ExpenseEvent.OnTitleChange(it)) },
                 placeholder = {
                     Text(
-                        "Title (Optional, e.g. Starbucks Latte)",
+                        if (isIncome) "Income Description (e.g. Monthly Salary)" else "Description (e.g. Starbucks Latte)",
                         style = MaterialTheme.typography.bodyMedium
                     )
                 },
@@ -192,7 +295,7 @@ fun AddExpenseBottomSheet(
                 )
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             // Custom Quick Number Pad
             QuickNumberPad(
@@ -201,7 +304,7 @@ fun AddExpenseBottomSheet(
                 onClear = { onEvent(ExpenseEvent.OnKeypadClear) }
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // Rapid Save Action Button
             Button(
@@ -212,23 +315,25 @@ fun AddExpenseBottomSheet(
                 enabled = draft.isValid,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(54.dp),
-                shape = RoundedCornerShape(16.dp),
+                    .height(52.dp),
+                shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
+                    containerColor = activeColor,
                     disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant
                 )
             ) {
                 Icon(
                     imageVector = Icons.Rounded.Check,
                     contentDescription = null,
+                    tint = if (isIncome) Color.Black else Color.White,
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = if (draft.isValid) "Log ₹${draft.amount.toInt()} Expense" else "Enter Amount",
+                    text = if (draft.isValid) "Log ₹${draft.amount.toInt()} ${draft.type.displayName}" else "Enter Amount",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = if (isIncome) Color.Black else Color.White
                 )
             }
         }

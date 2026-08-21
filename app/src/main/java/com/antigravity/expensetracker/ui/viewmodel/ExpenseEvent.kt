@@ -3,6 +3,7 @@ package com.antigravity.expensetracker.ui.viewmodel
 import com.antigravity.expensetracker.data.model.Category
 import com.antigravity.expensetracker.data.model.ExpenseEntity
 import com.antigravity.expensetracker.data.model.PaymentMode
+import com.antigravity.expensetracker.data.model.TransactionType
 import java.time.LocalDate
 
 sealed interface ExpenseEvent {
@@ -10,6 +11,7 @@ sealed interface ExpenseEvent {
     data class OnKeypadPress(val char: String) : ExpenseEvent
     data object OnKeypadBackspace : ExpenseEvent
     data object OnKeypadClear : ExpenseEvent
+    data class OnTypeSelect(val type: TransactionType) : ExpenseEvent
     data class OnTitleChange(val title: String) : ExpenseEvent
     data class OnCategorySelect(val category: Category) : ExpenseEvent
     data class OnPaymentModeSelect(val paymentMode: PaymentMode) : ExpenseEvent
@@ -36,6 +38,7 @@ sealed interface ExpenseEvent {
     data class OnDateFilterChange(val filter: DateFilterRange) : ExpenseEvent
     data class OnCategoryFilterToggle(val category: Category?) : ExpenseEvent
     data class OnPaymentModeFilterToggle(val paymentMode: PaymentMode?) : ExpenseEvent
+    data class OnTypeFilterToggle(val type: TransactionType?) : ExpenseEvent
 
     // Calendar Inspection
     data class OnCalendarMonthChange(val yearMonth: LocalDate) : ExpenseEvent

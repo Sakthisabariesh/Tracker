@@ -6,6 +6,7 @@ import com.antigravity.expensetracker.data.local.UserPreferences
 import com.antigravity.expensetracker.data.model.Category
 import com.antigravity.expensetracker.data.model.ExpenseEntity
 import com.antigravity.expensetracker.data.model.PaymentMode
+import com.antigravity.expensetracker.data.model.TransactionType
 import com.antigravity.expensetracker.domain.model.BudgetStatus
 import com.antigravity.expensetracker.domain.model.DashboardSummary
 import com.antigravity.expensetracker.domain.repository.ExpenseRepository
@@ -82,15 +83,17 @@ class ExpenseViewModel(
     private val _historyDateFilter = MutableStateFlow(DateFilterRange.THIS_MONTH)
     private val _historyCategoryFilter = MutableStateFlow<Category?>(null)
     private val _historyPaymentFilter = MutableStateFlow<PaymentMode?>(null)
+    private val _historyTypeFilter = MutableStateFlow<TransactionType?>(null)
 
     // Combined History State
     val historyUiState: StateFlow<HistoryUiState> = combine(
         _historySearchQuery,
         _historyDateFilter,
         _historyCategoryFilter,
-        _historyPaymentFilter
-    ) { query, dateFilter, category, paymentMode ->
-        HistoryFilterParams(query, dateFilter, category, paymentMode)
+        _historyPaymentFilter,
+        _historyTypeFilter
+    ) { query, dateFilter, category, paymentMode, type ->
+        HistoryFilterParams(query, dateFilter, category, paymentMode, type)
     }.flatMapLatest { params ->
         val now = LocalDate.now()
         val (startTime, endTime) = when (params.dateFilter) {
@@ -124,15 +127,18 @@ class ExpenseViewModel(
         }.map { list ->
             val filtered = list.filter { item ->
                 (params.category == null || item.category == params.category) &&
-                (params.paymentMode == null || item.paymentMode == params.paymentMode)
+                (params.paymentMode == null || item.paymentMode == params.paymentMode) &&
+                (params.type == null || item.type == params.type)
             }
             HistoryUiState(
                 searchQuery = params.query,
                 selectedFilterRange = params.dateFilter,
                 selectedCategory = params.category,
                 selectedPaymentMode = params.paymentMode,
+                selectedType = params.type,
                 expenses = filtered,
-                totalFilteredSpend = filtered.sumOf { it.amount },
+                totalFilteredSpend = filtered.filter { it.type == TransactionType.EXPENSE }.sumOf { it.amount },
+                totalFilteredIncome = filtered.filter { it.type == TransactionType.INCOME }.sumOf { it.amount },
                 isLoading = false
             )
         }
@@ -161,7 +167,7 @@ class ExpenseViewModel(
                 selectedDate = selectedDate,
                 dailySpendMap = dailyMap,
                 selectedDayExpenses = dayExpenses,
-                selectedDayTotal = dayExpenses.sumOf { it.amount },
+                selectedDayTotal = dayExpenses.filter { it.type == TransactionType.EXPENSE }.sumOf { it.amount },
                 isLoading = false
             )
         }
@@ -176,6 +182,12 @@ class ExpenseViewModel(
             is ExpenseEvent.OnKeypadPress -> handleKeypadInput(event.char)
             ExpenseEvent.OnKeypadBackspace -> handleKeypadBackspace()
             ExpenseEvent.OnKeypadClear -> _quickLogDraft.update { it.copy(amountString = "") }
+            is ExpenseEvent.OnTypeSelect -> {
+                _quickLogDraft.update { draft ->
+                    val defaultCat = if (event.type == TransactionType.INCOME) Category.SALARY else Category.FOOD
+                    draft.copy(type = event.type, category = defaultCat)
+                }
+            }
             is ExpenseEvent.OnTitleChange -> _quickLogDraft.update { it.copy(title = event.title) }
             is ExpenseEvent.OnCategorySelect -> _quickLogDraft.update { it.copy(category = event.category) }
             is ExpenseEvent.OnPaymentModeSelect -> _quickLogDraft.update { it.copy(paymentMode = event.paymentMode) }
@@ -199,7 +211,7 @@ class ExpenseViewModel(
             ExpenseEvent.OnClearAllExpenses -> {
                 viewModelScope.launch(Dispatchers.IO) {
                     repository.deleteAllExpenses()
-                    _userMessage.emit("All expenses cleared. Fresh start ready!")
+                    _userMessage.emit("All data cleared. Ready for your expenses!")
                 }
             }
 
@@ -207,7 +219,7 @@ class ExpenseViewModel(
                 recentlyDeletedExpense = event.expense
                 viewModelScope.launch(Dispatchers.IO) {
                     repository.deleteExpense(event.expense)
-                    _userMessage.emit("Expense deleted")
+                    _userMessage.emit("Deleted ${event.expense.title}")
                 }
             }
             ExpenseEvent.OnUndoDelete -> {
@@ -215,7 +227,7 @@ class ExpenseViewModel(
                     viewModelScope.launch(Dispatchers.IO) {
                         repository.insertExpense(expense.copy(id = 0L))
                         recentlyDeletedExpense = null
-                        _userMessage.emit("Expense restored")
+                        _userMessage.emit("Restored ${expense.title}")
                     }
                 }
             }
@@ -230,6 +242,11 @@ class ExpenseViewModel(
             is ExpenseEvent.OnPaymentModeFilterToggle -> {
                 _historyPaymentFilter.update { current ->
                     if (current == event.paymentMode) null else event.paymentMode
+                }
+            }
+            is ExpenseEvent.OnTypeFilterToggle -> {
+                _historyTypeFilter.update { current ->
+                    if (current == event.type) null else event.type
                 }
             }
 
@@ -280,7 +297,7 @@ class ExpenseViewModel(
         val draft = _quickLogDraft.value
         if (!draft.isValid) return
 
-        val title = if (draft.title.isNotBlank()) draft.title else "${draft.category.displayName} Spend"
+        val title = if (draft.title.isNotBlank()) draft.title else "${draft.category.displayName} ${draft.type.displayName}"
         val instant = draft.date.atTime(LocalTime.now()).atZone(zoneId).toInstant()
 
         val entity = ExpenseEntity(
@@ -288,6 +305,7 @@ class ExpenseViewModel(
             amount = draft.amount,
             category = draft.category,
             paymentMode = draft.paymentMode,
+            type = draft.type,
             timestamp = instant,
             notes = draft.notes
         )
@@ -295,7 +313,7 @@ class ExpenseViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             repository.insertExpense(entity)
             _quickLogDraft.value = QuickLogDraft()
-            _userMessage.emit("Logged ₹${entity.amount.toInt()} for ${entity.title}")
+            _userMessage.emit("Logged ₹${entity.amount.toInt()} (${entity.type.displayName})")
         }
     }
 
@@ -303,6 +321,7 @@ class ExpenseViewModel(
         val query: String,
         val dateFilter: DateFilterRange,
         val category: Category?,
-        val paymentMode: PaymentMode?
+        val paymentMode: PaymentMode?,
+        val type: TransactionType?
     )
 }

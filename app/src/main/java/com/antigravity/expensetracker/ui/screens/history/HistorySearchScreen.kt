@@ -34,7 +34,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -48,8 +47,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.antigravity.expensetracker.data.model.Category
-import com.antigravity.expensetracker.data.model.PaymentMode
+import com.antigravity.expensetracker.data.model.TransactionType
 import com.antigravity.expensetracker.ui.components.TransactionItem
+import com.antigravity.expensetracker.ui.theme.SafeGreen
+import com.antigravity.expensetracker.ui.theme.SpendingRed
 import com.antigravity.expensetracker.ui.viewmodel.DateFilterRange
 import com.antigravity.expensetracker.ui.viewmodel.ExpenseEvent
 import com.antigravity.expensetracker.ui.viewmodel.ExpenseViewModel
@@ -87,17 +88,30 @@ fun HistorySearchScreen(
             ) {
                 Column {
                     Text(
-                        text = "Expense History",
+                        text = "History & Audit",
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    Text(
-                        text = "Filtered total: ${currencyFormat.format(historyState.totalFilteredSpend)}",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Spend: -${currencyFormat.format(historyState.totalFilteredSpend)}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = SpendingRed,
+                            fontWeight = FontWeight.Bold
+                        )
+                        if (historyState.totalFilteredIncome > 0) {
+                            Text(
+                                text = "• Income: +${currencyFormat.format(historyState.totalFilteredIncome)}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = SafeGreen,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
                 }
 
                 OutlinedButton(
@@ -116,7 +130,7 @@ fun HistorySearchScreen(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(text = "Export CSV", style = MaterialTheme.typography.labelMedium)
+                    Text(text = "Export", style = MaterialTheme.typography.labelMedium)
                 }
             }
 
@@ -124,7 +138,7 @@ fun HistorySearchScreen(
             OutlinedTextField(
                 value = historyState.searchQuery,
                 onValueChange = { viewModel.onEvent(ExpenseEvent.OnSearchQueryChange(it)) },
-                placeholder = { Text("Search transactions by title or notes...") },
+                placeholder = { Text("Search title, category, or notes...") },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Rounded.Search,
@@ -154,9 +168,9 @@ fun HistorySearchScreen(
                     .padding(horizontal = 18.dp)
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
-            // Date Range Filter Pills (This Week, This Month, All Time)
+            // Transaction Type & Date Range Filter Pills
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -164,8 +178,28 @@ fun HistorySearchScreen(
                     .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                DateFilterRange.entries.forEach { range ->
-                    val isSelected = historyState.selectedFilterRange == range
+                // Type Filters (All, Expense, Income)
+                val isAllTypes = historyState.selectedType == null
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(
+                            if (isAllTypes) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                        )
+                        .clickable { viewModel.onEvent(ExpenseEvent.OnTypeFilterToggle(null)) }
+                        .padding(horizontal = 12.dp, vertical = 7.dp)
+                ) {
+                    Text(
+                        text = "All Types",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = if (isAllTypes) FontWeight.Bold else FontWeight.Medium,
+                        color = if (isAllTypes) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                    )
+                }
+
+                TransactionType.entries.forEach { type ->
+                    val isSelected = historyState.selectedType == type
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(10.dp))
@@ -173,14 +207,38 @@ fun HistorySearchScreen(
                                 if (isSelected) MaterialTheme.colorScheme.primary
                                 else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                             )
+                            .clickable { viewModel.onEvent(ExpenseEvent.OnTypeFilterToggle(type)) }
+                            .padding(horizontal = 12.dp, vertical = 7.dp)
+                    ) {
+                        Text(
+                            text = type.displayName,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+
+                Box(modifier = Modifier.width(1.dp).height(24.dp).background(MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)))
+
+                // Date Range Filters
+                DateFilterRange.entries.forEach { range ->
+                    val isSelected = historyState.selectedFilterRange == range
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(
+                                if (isSelected) MaterialTheme.colorScheme.secondary
+                                else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                            )
                             .clickable { viewModel.onEvent(ExpenseEvent.OnDateFilterChange(range)) }
-                            .padding(horizontal = 14.dp, vertical = 7.dp)
+                            .padding(horizontal = 12.dp, vertical = 7.dp)
                     ) {
                         Text(
                             text = range.label,
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                            color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                            color = if (isSelected) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }
@@ -245,17 +303,17 @@ fun HistorySearchScreen(
                     Icon(
                         imageVector = Icons.Rounded.Receipt,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                        modifier = Modifier.size(56.dp)
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f),
+                        modifier = Modifier.size(52.dp)
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
                     Text(
-                        text = "No matching expenses found",
+                        text = "No matching transactions",
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "Try adjusting your filters or search keywords",
+                        text = "Try adjusting your search query or filters",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -263,17 +321,23 @@ fun HistorySearchScreen(
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 18.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                    contentPadding = PaddingValues(horizontal = 18.dp, vertical = 6.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(
                         items = historyState.expenses,
                         key = { it.id }
                     ) { expense ->
-                        TransactionItem(
-                            expense = expense,
-                            onDelete = { viewModel.onEvent(ExpenseEvent.OnDeleteExpense(it)) }
-                        )
+                        Box(
+                            modifier = Modifier.clickable {
+                                viewModel.onEvent(ExpenseEvent.OnSelectExpenseForEdit(expense))
+                            }
+                        ) {
+                            TransactionItem(
+                                expense = expense,
+                                onDelete = { viewModel.onEvent(ExpenseEvent.OnDeleteExpense(it)) }
+                            )
+                        }
                     }
 
                     item {

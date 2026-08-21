@@ -34,10 +34,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.antigravity.expensetracker.data.model.ExpenseEntity
+import com.antigravity.expensetracker.data.model.TransactionType
+import com.antigravity.expensetracker.ui.theme.SafeGreen
 import com.antigravity.expensetracker.ui.theme.SpendingRed
 import java.text.NumberFormat
+import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -51,8 +55,20 @@ fun TransactionItem(
         maximumFractionDigits = 0
     }
 
-    val timeFormatter = DateTimeFormatter.ofPattern("hh:mm a")
-        .withZone(ZoneId.systemDefault())
+    val isIncome = expense.type == TransactionType.INCOME
+    val zoneId = ZoneId.systemDefault()
+    val localDateTime = expense.timestamp.atZone(zoneId).toLocalDateTime()
+    val today = LocalDate.now()
+    val txDate = localDateTime.toLocalDate()
+
+    val timeLabel = when {
+        txDate == today -> {
+            val hoursDiff = ChronoUnit.HOURS.between(localDateTime, java.time.LocalDateTime.now())
+            if (hoursDiff < 1) "Just now" else "${hoursDiff}h ago"
+        }
+        txDate == today.minusDays(1) -> "Yesterday"
+        else -> txDate.format(DateTimeFormatter.ofPattern("d MMM"))
+    }
 
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->
@@ -104,20 +120,20 @@ fun TransactionItem(
             // Category Icon Badge
             Box(
                 modifier = Modifier
-                    .size(46.dp)
+                    .size(44.dp)
                     .clip(CircleShape)
-                    .background(expense.category.getColor().copy(alpha = 0.15f)),
+                    .background(expense.category.getColor().copy(alpha = 0.12f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = expense.category.getIcon(),
                     contentDescription = expense.category.displayName,
                     tint = expense.category.getColor(),
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(22.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.width(14.dp))
+            Spacer(modifier = Modifier.width(12.dp))
 
             // Title, Notes & Payment Tag
             Column(modifier = Modifier.weight(1f)) {
@@ -143,13 +159,13 @@ fun TransactionItem(
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier
                             .clip(RoundedCornerShape(4.dp))
-                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f))
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.10f))
                             .padding(horizontal = 5.dp, vertical = 2.dp),
                         fontSize = 10.sp
                     )
 
                     Text(
-                        text = timeFormatter.format(expense.timestamp),
+                        text = timeLabel,
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -165,14 +181,14 @@ fun TransactionItem(
                 }
             }
 
-            Spacer(modifier = Modifier.width(10.dp))
+            Spacer(modifier = Modifier.width(8.dp))
 
             // Amount Readout
             Text(
-                text = "-${currencyFormat.format(expense.amount)}",
+                text = "${if (isIncome) "+" else "-"}${currencyFormat.format(expense.amount)}",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = if (isIncome) SafeGreen else MaterialTheme.colorScheme.onSurface
             )
         }
     }

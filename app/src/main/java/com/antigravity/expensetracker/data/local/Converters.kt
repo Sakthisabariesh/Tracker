@@ -3,6 +3,7 @@ package com.antigravity.expensetracker.data.local
 import androidx.room.TypeConverter
 import com.antigravity.expensetracker.data.model.Category
 import com.antigravity.expensetracker.data.model.PaymentMode
+import com.antigravity.expensetracker.data.model.TransactionType
 import java.time.Instant
 import java.time.LocalDate
 
@@ -45,5 +46,15 @@ class Converters {
     @TypeConverter
     fun toPaymentMode(value: String?): PaymentMode? {
         return value?.let { PaymentMode.fromString(it) }
+    }
+
+    @TypeConverter
+    fun fromTransactionType(type: TransactionType?): String? {
+        return type?.name
+    }
+
+    @TypeConverter
+    fun toTransactionType(value: String?): TransactionType? {
+        return value?.let { TransactionType.fromString(it) }
     }
 }

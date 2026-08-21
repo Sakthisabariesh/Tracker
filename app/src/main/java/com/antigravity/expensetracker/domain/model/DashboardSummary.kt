@@ -9,12 +9,14 @@ data class DailySpending(
     val dayLabel: String,
     val totalAmount: Double,
     val isToday: Boolean = false,
+    val isWeekend: Boolean = false,
     val categoryBreakdown: Map<Category, Double> = emptyMap()
 )
 
 data class DayExpenseSummary(
     val date: LocalDate,
-    val totalAmount: Double,
+    val totalSpent: Double,
+    val totalIncome: Double,
     val expenses: List<ExpenseEntity>
 )
 
@@ -38,6 +40,7 @@ data class BudgetStatus(
 
 data class DashboardSummary(
     val totalSpentMonth: Double = 0.0,
+    val totalIncomeMonth: Double = 0.0,
     val todaySpent: Double = 0.0,
     val yesterdaySpent: Double = 0.0,
     val runningTotal7Days: Double = 0.0,
@@ -45,6 +48,9 @@ data class DashboardSummary(
     val weeklyTrend: List<DailySpending> = emptyList(),
     val recentTransactions: List<ExpenseEntity> = emptyList()
 ) {
+    val netSavingsMonth: Double
+        get() = totalIncomeMonth - totalSpentMonth
+
     val todayDeltaPercentage: Double
         get() = if (yesterdaySpent > 0) {
             ((todaySpent - yesterdaySpent) / yesterdaySpent) * 100.0

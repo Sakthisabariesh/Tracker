@@ -17,8 +17,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.TrendingDown
 import androidx.compose.material.icons.automirrored.rounded.TrendingUp
-import androidx.compose.material.icons.rounded.CalendarToday
-import androidx.compose.material.icons.rounded.History
+import androidx.compose.material.icons.rounded.ArrowDownward
+import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -38,6 +38,7 @@ import com.antigravity.expensetracker.ui.theme.DarkCardGradientStart
 import com.antigravity.expensetracker.ui.theme.SafeGreen
 import com.antigravity.expensetracker.ui.theme.SpendingRed
 import java.text.NumberFormat
+import java.time.LocalTime
 import java.util.Locale
 
 @Composable
@@ -49,6 +50,13 @@ fun HeroMetricsCard(
         maximumFractionDigits = 0
     }
 
+    val hour = LocalTime.now().hour
+    val greeting = when {
+        hour < 12 -> "Good morning"
+        hour < 17 -> "Good afternoon"
+        else -> "Good evening"
+    }
+
     val isDark = MaterialTheme.colorScheme.background.red < 0.5f
     val cardBackground = if (isDark) {
         Brush.linearGradient(
@@ -56,20 +64,20 @@ fun HeroMetricsCard(
         )
     } else {
         Brush.linearGradient(
-            listOf(Color(0xFFE8F5E9), Color(0xFFC8E6C9))
+            listOf(Color(0xFFF1F5F9), Color(0xFFE2E8F0))
         )
     }
 
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
+            .clip(RoundedCornerShape(26.dp))
             .border(
                 1.dp,
-                MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
-                RoundedCornerShape(24.dp)
+                MaterialTheme.colorScheme.outline.copy(alpha = 0.25f),
+                RoundedCornerShape(26.dp)
             ),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(26.dp),
         color = Color.Transparent
     ) {
         Box(
@@ -83,15 +91,23 @@ fun HeroMetricsCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "TOTAL SPENT THIS MONTH",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        letterSpacing = 1.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    Column {
+                        Text(
+                            text = greeting.uppercase(),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            letterSpacing = 1.2.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Monthly Spending",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
 
-                    // Comparison badge
+                    // Spend Delta badge
                     val isSpendingMore = summary.todaySpent > summary.yesterdaySpent
                     val deltaColor = if (isSpendingMore) SpendingRed else SafeGreen
                     val deltaIcon = if (isSpendingMore) Icons.AutoMirrored.Rounded.TrendingUp else Icons.AutoMirrored.Rounded.TrendingDown
@@ -104,7 +120,7 @@ fun HeroMetricsCard(
                     Row(
                         modifier = Modifier
                             .clip(CircleShape)
-                            .background(deltaColor.copy(alpha = 0.15f))
+                            .background(deltaColor.copy(alpha = 0.12f))
                             .padding(horizontal = 10.dp, vertical = 5.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -112,7 +128,7 @@ fun HeroMetricsCard(
                             imageVector = deltaIcon,
                             contentDescription = null,
                             tint = deltaColor,
-                            modifier = Modifier.size(14.dp)
+                            modifier = Modifier.size(13.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
@@ -124,9 +140,9 @@ fun HeroMetricsCard(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-                // Hero Amount Readout
+                // Hero Spent Amount
                 Text(
                     text = currencyFormat.format(summary.totalSpentMonth),
                     style = MaterialTheme.typography.displayLarge,
@@ -134,67 +150,85 @@ fun HeroMetricsCard(
                     fontWeight = FontWeight.Black
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(18.dp))
 
-                // Bottom Sub-metrics Row
+                // Income vs Net Savings Split Bar
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.6f))
-                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.65f))
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    // Total Income Pill
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Rounded.CalendarToday,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Box(
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
+                                .background(SafeGreen.copy(alpha = 0.15f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.ArrowDownward,
+                                contentDescription = "Income",
+                                tint = SafeGreen,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
                         Column {
                             Text(
-                                text = "Today",
+                                text = "Income",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
-                                text = currencyFormat.format(summary.todaySpent),
-                                style = MaterialTheme.typography.titleMedium,
+                                text = currencyFormat.format(summary.totalIncomeMonth),
+                                style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
+                                color = SafeGreen
                             )
                         }
                     }
 
                     Box(
                         modifier = Modifier
-                            .height(28.dp)
+                            .height(26.dp)
                             .width(1.dp)
-                            .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.4f))
+                            .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
                     )
 
+                    // Net Savings Pill
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Rounded.History,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.tertiary,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Box(
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.ArrowUpward,
+                                contentDescription = "Net",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
                         Column {
                             Text(
-                                text = "7-Day Total",
+                                text = "Net Savings",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
-                                text = currencyFormat.format(summary.runningTotal7Days),
-                                style = MaterialTheme.typography.titleMedium,
+                                text = currencyFormat.format(summary.netSavingsMonth),
+                                style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
+                                color = if (summary.netSavingsMonth >= 0) MaterialTheme.colorScheme.onSurface else SpendingRed
                             )
                         }
                     }

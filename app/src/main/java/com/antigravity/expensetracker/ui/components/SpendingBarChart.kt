@@ -74,7 +74,7 @@ fun SpendingBarChart(
         animationProgress.snapTo(0f)
         animationProgress.animateTo(
             targetValue = 1f,
-            animationSpec = tween(durationMillis = 900, easing = FastOutSlowInEasing)
+            animationSpec = tween(durationMillis = 850, easing = FastOutSlowInEasing)
         )
     }
 
@@ -95,11 +95,11 @@ fun SpendingBarChart(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
+            .clip(RoundedCornerShape(22.dp))
             .border(
                 1.dp,
-                MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-                RoundedCornerShape(20.dp)
+                MaterialTheme.colorScheme.outline.copy(alpha = 0.25f),
+                RoundedCornerShape(22.dp)
             ),
         color = MaterialTheme.colorScheme.surface
     ) {
@@ -111,7 +111,7 @@ fun SpendingBarChart(
             ) {
                 Column {
                     Text(
-                        text = "7-Day Spending Trend",
+                        text = "7-Day Spending Activity",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -123,23 +123,30 @@ fun SpendingBarChart(
                     )
                 }
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Box(
                         modifier = Modifier
-                            .size(8.dp)
+                            .size(7.dp)
                             .clip(CircleShape)
                             .background(WarningOrange)
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(5.dp))
                     Text(
-                        text = "Limit: ${currencyFormat.format(dailyLimit)}",
+                        text = "Cap: ${currencyFormat.format(dailyLimit)}",
                         style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // Chart Canvas
             Box(
@@ -163,24 +170,24 @@ fun SpendingBarChart(
                     val count = weeklyTrend.size
                     if (count == 0) return@Canvas
 
-                    val availableHeight = size.height - 35.dp.toPx()
+                    val availableHeight = size.height - 32.dp.toPx()
                     val barSlotWidth = size.width / count
-                    val barWidth = barSlotWidth * 0.48f
+                    val barWidth = barSlotWidth * 0.44f
 
                     // Draw daily limit dashed reference line
                     val limitY = availableHeight * (1f - (dailyLimit / maxDailyAmount).toFloat())
                     drawLine(
-                        color = WarningOrange.copy(alpha = 0.6f),
+                        color = WarningOrange.copy(alpha = 0.45f),
                         start = Offset(0f, limitY),
                         end = Offset(size.width, limitY),
-                        strokeWidth = 2.dp.toPx(),
-                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(12f, 10f), 0f)
+                        strokeWidth = 1.5.dp.toPx(),
+                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 8f), 0f)
                     )
 
                     // Draw Bars
                     weeklyTrend.forEachIndexed { index, item ->
                         val isSelected = selectedIndex == index
-                        val isOverLimit = item.totalAmount > dailyLimit
+                        val isExceeded = item.totalAmount > dailyLimit
 
                         val barHeight = (availableHeight * (item.totalAmount / maxDailyAmount).toFloat() * animationProgress.value)
                             .coerceAtLeast(if (item.totalAmount > 0) 8.dp.toPx() else 2.dp.toPx())
@@ -189,27 +196,27 @@ fun SpendingBarChart(
                         val topY = availableHeight - barHeight
 
                         val barColor = when {
-                            isSelected -> if (isOverLimit) SpendingRed else (if (isDark) Emerald80 else Emerald40)
-                            isOverLimit -> SpendingRed.copy(alpha = 0.85f)
+                            isSelected -> if (isExceeded) SpendingRed else (if (isDark) Emerald80 else Emerald40)
+                            isExceeded -> SpendingRed.copy(alpha = 0.85f)
                             item.isToday -> primaryColor
-                            item.totalAmount == 0.0 -> surfaceVariantColor.copy(alpha = 0.4f)
-                            else -> primaryColor.copy(alpha = 0.65f)
+                            item.totalAmount == 0.0 -> surfaceVariantColor.copy(alpha = 0.35f)
+                            else -> primaryColor.copy(alpha = 0.60f)
                         }
 
-                        // Bar background slot
+                        // Bar background track
                         drawRoundRect(
-                            color = surfaceVariantColor.copy(alpha = 0.3f),
+                            color = surfaceVariantColor.copy(alpha = if (item.isWeekend) 0.25f else 0.15f),
                             topLeft = Offset(startX, 0f),
                             size = Size(barWidth, availableHeight),
-                            cornerRadius = CornerRadius(8.dp.toPx(), 8.dp.toPx())
+                            cornerRadius = CornerRadius(6.dp.toPx(), 6.dp.toPx())
                         )
 
-                        // Active Bar fill
+                        // Active Bar
                         drawRoundRect(
                             color = barColor,
                             topLeft = Offset(startX, topY),
                             size = Size(barWidth, barHeight),
-                            cornerRadius = CornerRadius(8.dp.toPx(), 8.dp.toPx())
+                            cornerRadius = CornerRadius(6.dp.toPx(), 6.dp.toPx())
                         )
 
                         // Draw X-axis Day labels
@@ -224,7 +231,7 @@ fun SpendingBarChart(
                             canvas.nativeCanvas.drawText(
                                 if (item.isToday) "Today" else item.dayLabel,
                                 startX + barWidth / 2f,
-                                size.height - 8.dp.toPx(),
+                                size.height - 6.dp.toPx(),
                                 paint
                             )
                         }
@@ -246,9 +253,9 @@ fun SpendingBarChart(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 14.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
+                            .padding(top = 12.dp)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                             .padding(12.dp)
                     ) {
                         Row(
@@ -258,7 +265,7 @@ fun SpendingBarChart(
                         ) {
                             Text(
                                 text = selectedItem.date.format(dateFormatter),
-                                style = MaterialTheme.typography.titleMedium,
+                                style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
@@ -281,13 +288,13 @@ fun SpendingBarChart(
                                     Row(
                                         modifier = Modifier
                                             .clip(RoundedCornerShape(8.dp))
-                                            .background(cat.getColor().copy(alpha = 0.15f))
+                                            .background(cat.getColor().copy(alpha = 0.12f))
                                             .padding(horizontal = 8.dp, vertical = 4.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Box(
                                             modifier = Modifier
-                                                .size(8.dp)
+                                                .size(6.dp)
                                                 .clip(CircleShape)
                                                 .background(cat.getColor())
                                         )
@@ -304,7 +311,7 @@ fun SpendingBarChart(
                         } else {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "No expenses logged on this day",
+                                text = "Zero spend recorded on this date",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )

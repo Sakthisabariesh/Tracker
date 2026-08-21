@@ -61,11 +61,11 @@ fun CalendarGrid(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
+            .clip(RoundedCornerShape(22.dp))
             .border(
                 1.dp,
-                MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-                RoundedCornerShape(20.dp)
+                MaterialTheme.colorScheme.outline.copy(alpha = 0.25f),
+                RoundedCornerShape(22.dp)
             ),
         color = MaterialTheme.colorScheme.surface
     ) {
@@ -98,7 +98,7 @@ fun CalendarGrid(
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Day of week labels (M, T, W, T, F, S, S)
             Row(
@@ -117,7 +117,7 @@ fun CalendarGrid(
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             // Calendar Days Grid
             val totalSlots = leadingEmptySlots + daysInMonth
@@ -178,21 +178,20 @@ fun CalendarGrid(
 
                                     if (hasSpend) {
                                         Spacer(modifier = Modifier.height(2.dp))
+                                        val dotSize = if (daySpend > 2000.0) 6.dp else 4.dp
+                                        val dotColor = if (isSelected) MaterialTheme.colorScheme.onPrimary
+                                                       else if (daySpend > 2000.0) SpendingRed
+                                                       else WarningOrange
                                         Box(
                                             modifier = Modifier
-                                                .size(5.dp)
+                                                .size(dotSize)
                                                 .clip(CircleShape)
-                                                .background(
-                                                    if (isSelected) MaterialTheme.colorScheme.onPrimary
-                                                    else if (daySpend > 2000.0) SpendingRed
-                                                    else WarningOrange
-                                                )
+                                                .background(dotColor)
                                         )
                                     }
                                 }
                             }
                         } else {
-                            // Empty slot outside month
                             Spacer(
                                 modifier = Modifier
                                     .weight(1f)

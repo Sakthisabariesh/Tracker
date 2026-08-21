@@ -1,13 +1,23 @@
 // Category definitions with icons and colors
-const CATEGORIES = [
-  { id: 'FOOD', name: 'Food & Dining', color: '#ff6d00', icon: 'fastfood' },
-  { id: 'TRAVEL', name: 'Travel & Commute', color: '#0091ea', icon: 'directions_bus' },
-  { id: 'BILLS', name: 'Bills & Utilities', color: '#7c4dff', icon: 'receipt_long' },
-  { id: 'SHOPPING', name: 'Shopping', color: '#ff4081', icon: 'local_mall' },
-  { id: 'GROCERIES', name: 'Groceries', color: '#00c853', icon: 'shopping_cart' },
-  { id: 'ENTERTAINMENT', name: 'Entertainment', color: '#aeea00', icon: 'movie' },
-  { id: 'OTHERS', name: 'Others', color: '#78909c', icon: 'more_horiz' }
+const EXPENSE_CATEGORIES = [
+  { id: 'FOOD', name: 'Dining & Food', color: '#ff7043', icon: 'fastfood' },
+  { id: 'TRAVEL', name: 'Transport', color: '#29b6f6', icon: 'directions_bus' },
+  { id: 'BILLS', name: 'Bills & Utilities', color: '#9575cd', icon: 'receipt_long' },
+  { id: 'SHOPPING', name: 'Shopping', color: '#ec407a', icon: 'local_mall' },
+  { id: 'GROCERIES', name: 'Groceries', color: '#66bb6a', icon: 'shopping_cart' },
+  { id: 'ENTERTAINMENT', name: 'Entertainment', color: '#ffca28', icon: 'movie' },
+  { id: 'HEALTH', name: 'Health & Fitness', color: '#26a69a', icon: 'fitness_center' },
+  { id: 'OTHERS', name: 'Miscellaneous', color: '#78909c', icon: 'more_horiz' }
 ];
+
+const INCOME_CATEGORIES = [
+  { id: 'SALARY', name: 'Salary & Wage', color: '#00e676', icon: 'payments' },
+  { id: 'FREELANCE', name: 'Freelance & Side Gig', color: '#00b0ff', icon: 'laptop_mac' },
+  { id: 'INVESTMENTS', name: 'Investments & Returns', color: '#7c4dff', icon: 'account_balance' },
+  { id: 'CASHBACK', name: 'Cashback & Rewards', color: '#ffd600', icon: 'savings' }
+];
+
+const ALL_CATEGORIES = [...EXPENSE_CATEGORIES, ...INCOME_CATEGORIES];
 
 const PAYMENT_MODES = [
   { id: 'UPI', name: 'UPI / GPay', tag: 'UPI', icon: 'qr_code_scanner' },
@@ -18,15 +28,15 @@ const PAYMENT_MODES = [
 
 // Initial Seed Data (Only if no local storage exists)
 const DEFAULT_EXPENSES = [
-  { id: 1, title: 'Healthy Brunch & Coffee', amount: 380, category: 'FOOD', paymentMode: 'UPI', timestamp: new Date(Date.now() - 2 * 3600000).toISOString(), notes: 'Blue Tokai Coffee' },
-  { id: 2, title: 'Cab to Office', amount: 220, category: 'TRAVEL', paymentMode: 'UPI', timestamp: new Date(Date.now() - 5 * 3600000).toISOString(), notes: 'Ola Prime' },
-  { id: 3, title: 'Weekly Grocery Staples', amount: 1450, category: 'GROCERIES', paymentMode: 'CREDIT_CARD', timestamp: new Date(Date.now() - 28 * 3600000).toISOString(), notes: "Nature's Basket" },
-  { id: 4, title: 'Electricity & Wifi Bill', amount: 1890, category: 'BILLS', paymentMode: 'DEBIT_CARD', timestamp: new Date(Date.now() - 32 * 3600000).toISOString(), notes: 'Airtel Broadband' },
-  { id: 5, title: 'Team Dinner', amount: 1200, category: 'FOOD', paymentMode: 'CREDIT_CARD', timestamp: new Date(Date.now() - 52 * 3600000).toISOString(), notes: 'Burmese Kitchen' },
-  { id: 6, title: 'Running Shoes', amount: 3499, category: 'SHOPPING', paymentMode: 'CREDIT_CARD', timestamp: new Date(Date.now() - 76 * 3600000).toISOString(), notes: 'Nike Pegasus' },
-  { id: 7, title: 'Metro Card Recharge', amount: 500, category: 'TRAVEL', paymentMode: 'UPI', timestamp: new Date(Date.now() - 100 * 3600000).toISOString(), notes: 'Monthly pass' },
-  { id: 8, title: 'Movie IMAX Tickets', amount: 860, category: 'ENTERTAINMENT', paymentMode: 'UPI', timestamp: new Date(Date.now() - 124 * 3600000).toISOString(), notes: 'BookMyShow' },
-  { id: 9, title: 'Pharmacy & Supplements', amount: 640, category: 'OTHERS', paymentMode: 'CASH', timestamp: new Date(Date.now() - 148 * 3600000).toISOString(), notes: 'Apollo Pharmacy' }
+  { id: 1, title: 'Monthly Salary Credit', amount: 65000, category: 'SALARY', paymentMode: 'DEBIT_CARD', type: 'INCOME', timestamp: new Date(Date.now() - 200 * 3600000).toISOString(), notes: 'August Salary' },
+  { id: 2, title: 'Healthy Brunch & Coffee', amount: 380, category: 'FOOD', paymentMode: 'UPI', type: 'EXPENSE', timestamp: new Date(Date.now() - 2 * 3600000).toISOString(), notes: 'Blue Tokai Coffee' },
+  { id: 3, title: 'Cab to Office', amount: 220, category: 'TRAVEL', paymentMode: 'UPI', type: 'EXPENSE', timestamp: new Date(Date.now() - 5 * 3600000).toISOString(), notes: 'Ola Prime' },
+  { id: 4, title: 'Weekly Grocery Staples', amount: 1450, category: 'GROCERIES', paymentMode: 'CREDIT_CARD', type: 'EXPENSE', timestamp: new Date(Date.now() - 28 * 3600000).toISOString(), notes: "Nature's Basket" },
+  { id: 5, title: 'Electricity & Wifi Bill', amount: 1890, category: 'BILLS', paymentMode: 'DEBIT_CARD', type: 'EXPENSE', timestamp: new Date(Date.now() - 32 * 3600000).toISOString(), notes: 'Airtel Broadband' },
+  { id: 6, title: 'Freelance Design Retainer', amount: 12000, category: 'FREELANCE', paymentMode: 'UPI', type: 'INCOME', timestamp: new Date(Date.now() - 48 * 3600000).toISOString(), notes: 'UI Design Milestone' },
+  { id: 7, title: 'Team Dinner', amount: 1200, category: 'FOOD', paymentMode: 'CREDIT_CARD', type: 'EXPENSE', timestamp: new Date(Date.now() - 52 * 3600000).toISOString(), notes: 'Burmese Kitchen' },
+  { id: 8, title: 'Running Shoes', amount: 3499, category: 'SHOPPING', paymentMode: 'CREDIT_CARD', type: 'EXPENSE', timestamp: new Date(Date.now() - 76 * 3600000).toISOString(), notes: 'Nike Pegasus' },
+  { id: 9, title: 'Metro Card Recharge', amount: 500, category: 'TRAVEL', paymentMode: 'UPI', type: 'EXPENSE', timestamp: new Date(Date.now() - 100 * 3600000).toISOString(), notes: 'Monthly pass' }
 ];
 
 // App State
@@ -43,15 +53,18 @@ class ExpenseAppState {
     this.activeTab = 'tab-home';
 
     // Quick Log Draft
+    this.draftType = 'EXPENSE';
     this.draftAmount = '';
     this.draftCategory = 'FOOD';
     this.draftPayment = 'UPI';
     this.draftTitle = '';
+    this.draftDate = new Date();
 
     // History Filters
     this.historyQuery = '';
     this.historyRange = 'THIS_MONTH';
     this.historyCategory = null;
+    this.historyType = null;
   }
 
   loadExpenses() {
@@ -187,7 +200,26 @@ function formatINR(amount) {
   return '₹' + Math.round(amount).toLocaleString('en-IN');
 }
 
-// Update Status Time
+// Relative human timestamp
+function getRelativeTime(timestamp) {
+  const d = new Date(timestamp);
+  const now = new Date();
+  const diffMs = now - d;
+  const diffHours = Math.floor(diffMs / 3600000);
+
+  const isToday = d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+  const isYesterday = d.getDate() === yesterday.getDate() && d.getMonth() === yesterday.getMonth() && d.getFullYear() === yesterday.getFullYear();
+
+  if (isToday) {
+    if (diffHours < 1) return 'Just now';
+    return `${diffHours}h ago`;
+  }
+  if (isYesterday) return 'Yesterday';
+  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+}
+
+// Clock
 function updateClock() {
   const now = new Date();
   const hours = String(now.getHours()).padStart(2, '0');
@@ -203,39 +235,36 @@ function renderDashboard() {
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
 
-  // Monthly Total
-  const monthExpenses = state.expenses.filter(e => {
+  // Monthly Expenses & Incomes
+  const monthItems = state.expenses.filter(e => {
     const d = new Date(e.timestamp);
     return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
   });
-  const totalMonth = monthExpenses.reduce((sum, e) => sum + e.amount, 0);
-  heroTotalMonth.textContent = formatINR(totalMonth);
+
+  const totalExpense = monthItems.filter(e => (e.type || 'EXPENSE') === 'EXPENSE').reduce((sum, e) => sum + e.amount, 0);
+  const totalIncome = monthItems.filter(e => e.type === 'INCOME').reduce((sum, e) => sum + e.amount, 0);
+  const netSavings = totalIncome - totalExpense;
+
+  heroTotalMonth.textContent = formatINR(totalExpense);
+  heroTodaySpend.textContent = formatINR(totalIncome);
+  hero7DaySpend.textContent = formatINR(netSavings);
 
   // Today & Yesterday Spend
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const yesterdayStart = todayStart - 86400000;
 
   const todaySpend = state.expenses
-    .filter(e => new Date(e.timestamp).getTime() >= todayStart)
+    .filter(e => (e.type || 'EXPENSE') === 'EXPENSE' && new Date(e.timestamp).getTime() >= todayStart)
     .reduce((sum, e) => sum + e.amount, 0);
 
   const yesterdaySpend = state.expenses
     .filter(e => {
       const t = new Date(e.timestamp).getTime();
-      return t >= yesterdayStart && t < todayStart;
+      return (e.type || 'EXPENSE') === 'EXPENSE' && t >= yesterdayStart && t < todayStart;
     })
     .reduce((sum, e) => sum + e.amount, 0);
 
-  heroTodaySpend.textContent = formatINR(todaySpend);
-
-  // 7-day spend
-  const sevenDaysAgo = todayStart - 6 * 86400000;
-  const running7Day = state.expenses
-    .filter(e => new Date(e.timestamp).getTime() >= sevenDaysAgo)
-    .reduce((sum, e) => sum + e.amount, 0);
-  hero7DaySpend.textContent = formatINR(running7Day);
-
-  // Comparison Delta
+  // Delta Badge
   const isSpendingMore = todaySpend > yesterdaySpend;
   if (yesterdaySpend > 0) {
     const delta = Math.round(((todaySpend - yesterdaySpend) / yesterdaySpend) * 100);
@@ -249,14 +278,13 @@ function renderDashboard() {
   }
 
   // Budget Progress
-  const pct = Math.min((totalMonth / state.monthlyBudget) * 100, 150);
+  const pct = Math.min((totalExpense / state.monthlyBudget) * 100, 150);
   budgetPercent.textContent = `${Math.round(pct)}% Used`;
-  const remaining = Math.max(state.monthlyBudget - totalMonth, 0);
+  const remaining = Math.max(state.monthlyBudget - totalExpense, 0);
   budgetRemaining.textContent = formatINR(remaining);
   budgetCapDisplay.textContent = formatINR(state.monthlyBudget);
   chartLimitLabel.textContent = `Limit: ${formatINR(state.dailyLimit)}`;
 
-  // Stroke Dashoffset
   const offset = 138.2 - (138.2 * Math.min(pct, 100)) / 100;
   ringIndicator.style.strokeDashoffset = offset;
 
@@ -283,10 +311,7 @@ function renderDashboard() {
     budgetWarningText.style.display = 'none';
   }
 
-  // Recent 5 Transactions
   renderRecentTransactions();
-
-  // Render 7-day Bar Chart
   renderBarChart();
 }
 
@@ -304,7 +329,6 @@ function renderBarChart() {
   const h = rect.height;
   ctx.clearRect(0, 0, w, h);
 
-  // Compute 7 days
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const dayData = [];
@@ -316,7 +340,7 @@ function renderBarChart() {
 
     const dayExpenses = state.expenses.filter(e => {
       const t = new Date(e.timestamp).getTime();
-      return t >= dayStart && t < dayEnd;
+      return (e.type || 'EXPENSE') === 'EXPENSE' && t >= dayStart && t < dayEnd;
     });
 
     const total = dayExpenses.reduce((sum, e) => sum + e.amount, 0);
@@ -331,6 +355,7 @@ function renderBarChart() {
       label: i === 0 ? 'Today' : dayNames[dateObj.getDay()],
       total,
       isToday: i === 0,
+      isWeekend: dateObj.getDay() === 0 || dateObj.getDay() === 6,
       categories: catMap
     });
   }
@@ -338,11 +363,11 @@ function renderBarChart() {
   const maxSpend = Math.max(...dayData.map(d => d.total), state.dailyLimit * 1.3, 2000);
   const chartHeight = h - 28;
   const barSlot = w / 7;
-  const barWidth = barSlot * 0.46;
+  const barWidth = barSlot * 0.44;
 
   // Draw Limit Line
   const limitY = chartHeight * (1 - state.dailyLimit / maxSpend);
-  ctx.strokeStyle = 'rgba(255, 145, 0, 0.5)';
+  ctx.strokeStyle = 'rgba(255, 145, 0, 0.4)';
   ctx.lineWidth = 1.5;
   ctx.setLineDash([6, 5]);
   ctx.beginPath();
@@ -359,29 +384,29 @@ function renderBarChart() {
     const x = idx * barSlot + (barSlot - barWidth) / 2;
     const y = chartHeight - barH;
 
-    // Slot Background
-    ctx.fillStyle = 'rgba(128, 128, 128, 0.08)';
+    // Track background
+    ctx.fillStyle = d.isWeekend ? 'rgba(128, 128, 128, 0.12)' : 'rgba(128, 128, 128, 0.06)';
     roundRect(ctx, x, 0, barWidth, chartHeight, 6);
     ctx.fill();
 
     // Active Bar
     if (isSelected) {
-      ctx.fillStyle = isExceeded ? '#ff5252' : '#66ffa6';
+      ctx.fillStyle = isExceeded ? '#ff5252' : '#00e676';
     } else if (isExceeded) {
       ctx.fillStyle = 'rgba(255, 82, 82, 0.85)';
     } else if (d.isToday) {
-      ctx.fillStyle = 'var(--primary-accent)';
+      ctx.fillStyle = 'var(--primary)';
     } else if (d.total === 0) {
-      ctx.fillStyle = 'rgba(128, 128, 128, 0.2)';
+      ctx.fillStyle = 'rgba(128, 128, 128, 0.18)';
     } else {
-      ctx.fillStyle = 'rgba(0, 200, 83, 0.65)';
+      ctx.fillStyle = 'rgba(0, 230, 118, 0.60)';
     }
 
     roundRect(ctx, x, y, barWidth, barH, 6);
     ctx.fill();
 
     // Day Label
-    ctx.fillStyle = d.isToday ? 'var(--primary-accent)' : 'var(--text-muted)';
+    ctx.fillStyle = d.isToday ? 'var(--primary)' : 'var(--text-muted)';
     ctx.font = `${d.isToday || isSelected ? '700' : '500'} 11px ${getComputedStyle(document.body).getPropertyValue('--font-family')}`;
     ctx.textAlign = 'center';
     ctx.fillText(d.label, x + barWidth / 2, h - 6);
@@ -403,7 +428,6 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-// Bar Chart Click
 barChartCanvas.addEventListener('click', (e) => {
   const rect = barChartCanvas.getBoundingClientRect();
   const x = e.clientX - rect.left;
@@ -418,13 +442,13 @@ barChartCanvas.addEventListener('click', (e) => {
       chartDetailOverlay.style.display = 'block';
       detailDate.textContent = d.date.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
       detailTotal.textContent = formatINR(d.total);
-      detailTotal.style.color = d.total > state.dailyLimit ? 'var(--spending-red)' : 'var(--primary-accent)';
+      detailTotal.style.color = d.total > state.dailyLimit ? 'var(--spending-red)' : 'var(--primary)';
 
       detailChips.innerHTML = '';
       const catKeys = Object.keys(d.categories);
       if (catKeys.length > 0) {
         catKeys.forEach(catId => {
-          const cat = CATEGORIES.find(c => c.id === catId) || CATEGORIES[6];
+          const cat = ALL_CATEGORIES.find(c => c.id === catId) || ALL_CATEGORIES[0];
           const chip = document.createElement('div');
           chip.className = 'detail-chip';
           chip.style.background = `${cat.color}25`;
@@ -432,7 +456,7 @@ barChartCanvas.addEventListener('click', (e) => {
           detailChips.appendChild(chip);
         });
       } else {
-        detailChips.innerHTML = '<span style="font-size:11px; color:var(--text-muted)">No expenses recorded</span>';
+        detailChips.innerHTML = '<span style="font-size:11px; color:var(--text-muted)">Zero spend recorded</span>';
       }
     } else {
       chartDetailOverlay.style.display = 'none';
@@ -447,8 +471,8 @@ function renderRecentTransactions() {
 
   if (recent.length === 0) {
     recentTransactionsList.innerHTML = `
-      <div style="text-align:center; padding: 24px; color:var(--text-muted);">
-        <span class="material-symbols-rounded" style="font-size:42px; opacity:0.4;">receipt</span>
+      <div style="text-align:center; padding: 24px; color:var(--text-muted); background:var(--surface); border:1px solid var(--border); border-radius:18px;">
+        <span class="material-symbols-rounded" style="font-size:38px; opacity:0.35;">receipt</span>
         <p style="font-size:14px; font-weight:700; color:var(--text); margin-top:6px;">No expenses logged yet</p>
         <p style="font-size:12px; margin-top:2px;">Tap the + button to log your first spend</p>
       </div>`;
@@ -461,31 +485,30 @@ function renderRecentTransactions() {
 }
 
 function createTransactionCard(tx) {
-  const cat = CATEGORIES.find(c => c.id === tx.category) || CATEGORIES[6];
+  const isIncome = tx.type === 'INCOME';
+  const cat = ALL_CATEGORIES.find(c => c.id === tx.category) || ALL_CATEGORIES[0];
   const mode = PAYMENT_MODES.find(m => m.id === tx.paymentMode) || PAYMENT_MODES[0];
-  const dateObj = new Date(tx.timestamp);
-  const timeStr = dateObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+  const relTime = getRelativeTime(tx.timestamp);
 
   const card = document.createElement('div');
   card.className = 'transaction-card';
   card.style.cursor = 'pointer';
   card.innerHTML = `
-    <div class="tx-icon-badge" style="background: ${cat.color}20; color: ${cat.color}">
+    <div class="tx-icon-badge" style="background: ${cat.color}18; color: ${cat.color}">
       <span class="material-symbols-rounded">${cat.icon}</span>
     </div>
     <div class="tx-info">
       <div class="tx-title">${tx.title}</div>
       <div class="tx-meta">
         <span class="tag-pill">${mode.tag}</span>
-        <span>${timeStr}</span>
+        <span>${relTime}</span>
         ${tx.notes ? `<span>• ${tx.notes}</span>` : ''}
       </div>
     </div>
-    <div class="tx-amount">-${formatINR(tx.amount)}</div>
+    <div class="tx-amount ${isIncome ? 'income' : ''}">${isIncome ? '+' : '-'}${formatINR(tx.amount)}</div>
     <button class="tx-delete-btn" title="Delete"><span class="material-symbols-rounded">delete</span></button>
   `;
 
-  // Tap to edit
   card.addEventListener('click', (e) => {
     if (e.target.closest('.tx-delete-btn')) return;
     openEditModal(tx);
@@ -525,12 +548,12 @@ function closeEditModal() {
 
 function renderEditCategoryChips() {
   editCategoryChips.innerHTML = '';
-  CATEGORIES.forEach(cat => {
+  ALL_CATEGORIES.forEach(cat => {
     const chip = document.createElement('button');
     const isSel = activeEditCategory === cat.id;
     chip.className = `filter-chip ${isSel ? 'active' : ''}`;
     if (isSel) chip.style.background = cat.color;
-    chip.innerHTML = `<span class="material-symbols-rounded" style="font-size:16px; margin-right:4px; vertical-align:middle;">${cat.icon}</span>${cat.name}`;
+    chip.innerHTML = `<span class="material-symbols-rounded" style="font-size:15px; margin-right:4px; vertical-align:middle;">${cat.icon}</span>${cat.name}`;
     chip.addEventListener('click', () => {
       activeEditCategory = cat.id;
       renderEditCategoryChips();
@@ -545,7 +568,7 @@ function renderEditPaymentChips() {
     const chip = document.createElement('button');
     const isSel = activeEditPayment === mode.id;
     chip.className = `filter-chip ${isSel ? 'active' : ''}`;
-    chip.innerHTML = `<span class="material-symbols-rounded" style="font-size:16px; margin-right:4px; vertical-align:middle;">${mode.icon}</span>${mode.name}`;
+    chip.innerHTML = `<span class="material-symbols-rounded" style="font-size:15px; margin-right:4px; vertical-align:middle;">${mode.icon}</span>${mode.name}`;
     chip.addEventListener('click', () => {
       activeEditPayment = mode.id;
       renderEditPaymentChips();
@@ -559,10 +582,10 @@ saveEditBtn.addEventListener('click', () => {
   const amount = parseFloat(editAmountInput.value);
   if (!amount || amount <= 0) return;
 
-  const catObj = CATEGORIES.find(c => c.id === activeEditCategory);
+  const catObj = ALL_CATEGORIES.find(c => c.id === activeEditCategory);
   const updated = {
     ...state.editingExpense,
-    title: editTitleInput.value.trim() || `${catObj?.name || 'Expense'} Spend`,
+    title: editTitleInput.value.trim() || `${catObj?.name || 'Expense'}`,
     amount: amount,
     category: activeEditCategory,
     paymentMode: activeEditPayment,
@@ -613,11 +636,11 @@ saveSettingsBtn.addEventListener('click', () => {
 });
 
 clearAllDataBtn.addEventListener('click', () => {
-  if (confirm('Are you sure you want to clear all expenses and start fresh from ₹0?')) {
+  if (confirm('Are you sure you want to clear all transactions and start fresh from ₹0?')) {
     state.clearAllData();
     closeSettingsModal();
     renderAll();
-    showSnackbar('All data cleared. Fresh start ready!');
+    showSnackbar('All transactions cleared. Ready to track!');
   }
 });
 
@@ -633,11 +656,10 @@ function renderCalendar() {
 
   currentMonthYear.textContent = current.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
 
-  // Compute daily spend map
   const dailySpendMap = {};
   state.expenses.forEach(e => {
     const d = new Date(e.timestamp);
-    if (d.getFullYear() === year && d.getMonth() === month) {
+    if ((e.type || 'EXPENSE') === 'EXPENSE' && d.getFullYear() === year && d.getMonth() === month) {
       const day = d.getDate();
       dailySpendMap[day] = (dailySpendMap[day] || 0) + e.amount;
     }
@@ -670,7 +692,8 @@ function renderCalendar() {
     if (isSelected) cell.classList.add('selected');
 
     const spend = dailySpendMap[d] || 0;
-    cell.innerHTML = `<span>${d}</span>${spend > 0 ? '<div class="cal-dot"></div>' : ''}`;
+    const dotHtml = spend > 0 ? `<div class="cal-dot ${spend > 2000 ? 'high' : ''}"></div>` : '';
+    cell.innerHTML = `<span>${d}</span>${dotHtml}`;
 
     cell.addEventListener('click', () => {
       state.selectedCalendarDate = new Date(year, month, d);
@@ -690,17 +713,17 @@ function renderCalendar() {
            d.getDate() === sel.getDate();
   });
 
-  const totalDaySpend = dayExpenses.reduce((sum, e) => sum + e.amount, 0);
+  const totalDaySpend = dayExpenses.filter(e => (e.type || 'EXPENSE') === 'EXPENSE').reduce((sum, e) => sum + e.amount, 0);
   calendarSelectedDayTotal.textContent = formatINR(totalDaySpend);
   calendarSelectedDayCount.textContent = `${dayExpenses.length} item${dayExpenses.length === 1 ? '' : 's'}`;
 
   calendarDateTransactionsList.innerHTML = '';
   if (dayExpenses.length === 0) {
     calendarDateTransactionsList.innerHTML = `
-      <div style="text-align:center; padding: 24px; color:var(--text-muted); background:var(--surface); border:1px solid var(--border); border-radius:16px;">
+      <div style="text-align:center; padding: 24px; color:var(--text-muted); background:var(--surface); border:1px solid var(--border); border-radius:18px;">
         <span class="material-symbols-rounded text-primary" style="font-size:36px;">check_circle</span>
         <p style="font-size:14px; font-weight:700; color:var(--text); margin-top:6px;">Zero spend recorded</p>
-        <p style="font-size:12px; margin-top:2px;">No expenses on this date</p>
+        <p style="font-size:12px; margin-top:2px;">No transactions on this date</p>
       </div>`;
   } else {
     dayExpenses.forEach(tx => {
@@ -736,6 +759,10 @@ function renderHistory() {
     return true;
   });
 
+  if (state.historyType) {
+    filtered = filtered.filter(e => (e.type || 'EXPENSE') === state.historyType);
+  }
+
   if (state.historyCategory) {
     filtered = filtered.filter(e => e.category === state.historyCategory);
   }
@@ -744,15 +771,15 @@ function renderHistory() {
     filtered = filtered.filter(e => e.title.toLowerCase().includes(query) || (e.notes && e.notes.toLowerCase().includes(query)));
   }
 
-  const total = filtered.reduce((sum, e) => sum + e.amount, 0);
+  const total = filtered.filter(e => (e.type || 'EXPENSE') === 'EXPENSE').reduce((sum, e) => sum + e.amount, 0);
   historyFilteredTotal.textContent = formatINR(total);
 
   historyTransactionsList.innerHTML = '';
   if (filtered.length === 0) {
     historyTransactionsList.innerHTML = `
       <div style="text-align:center; padding: 40px 20px; color:var(--text-muted);">
-        <span class="material-symbols-rounded" style="font-size:48px; opacity:0.4;">search_off</span>
-        <p style="font-size:15px; font-weight:700; color:var(--text); margin-top:8px;">No matching expenses found</p>
+        <span class="material-symbols-rounded" style="font-size:44px; opacity:0.35;">search_off</span>
+        <p style="font-size:15px; font-weight:700; color:var(--text); margin-top:8px;">No matching transactions</p>
         <p style="font-size:12px; margin-top:2px;">Try adjusting keywords or active filters</p>
       </div>`;
   } else {
@@ -762,10 +789,9 @@ function renderHistory() {
   }
 }
 
-// Category filter chips in history
 function renderHistoryCategoryChips() {
   categoryFilterRow.innerHTML = '';
-  CATEGORIES.forEach(cat => {
+  ALL_CATEGORIES.forEach(cat => {
     const btn = document.createElement('button');
     const isSelected = state.historyCategory === cat.id;
     btn.className = `filter-chip ${isSelected ? 'active' : ''}`;
@@ -803,12 +829,12 @@ document.querySelectorAll('[data-range]').forEach(chip => {
 
 // CSV Export
 exportCsvBtn.addEventListener('click', () => {
-  let csv = 'ID,Date,Title,Category,PaymentMode,Amount,Notes\n';
+  let csv = 'ID,Date,Title,Type,Category,PaymentMode,Amount,Notes\n';
   state.expenses.forEach(e => {
-    const cat = CATEGORIES.find(c => c.id === e.category)?.name || e.category;
+    const cat = ALL_CATEGORIES.find(c => c.id === e.category)?.name || e.category;
     const mode = PAYMENT_MODES.find(m => m.id === e.paymentMode)?.name || e.paymentMode;
     const dateStr = new Date(e.timestamp).toISOString();
-    csv += `${e.id},"${dateStr}","${e.title.replace(/"/g, '""')}","${cat}","${mode}",${e.amount},"${(e.notes || '').replace(/"/g, '""')}"\n`;
+    csv += `${e.id},"${dateStr}","${e.title.replace(/"/g, '""')}","${e.type || 'EXPENSE'}","${cat}","${mode}",${e.amount},"${(e.notes || '').replace(/"/g, '""')}"\n`;
   });
 
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -818,15 +844,17 @@ exportCsvBtn.addEventListener('click', () => {
   a.download = `ExpenseTracker_Export_${Date.now()}.csv`;
   a.click();
   URL.revokeObjectURL(url);
-  showSnackbar('CSV backup downloaded successfully!');
+  showSnackbar('CSV backup exported successfully!');
 });
 
 // QUICK LOG MODAL & NUMPAD
 function openQuickModal() {
   state.draftAmount = '';
+  state.draftType = 'EXPENSE';
   state.draftCategory = 'FOOD';
   state.draftPayment = 'UPI';
   state.draftTitle = '';
+  state.draftDate = new Date();
   quickTitleInput.value = '';
   updateNumpadDisplay();
   renderQuickChips();
@@ -841,17 +869,18 @@ function updateNumpadDisplay() {
   numpadAmountDisplay.textContent = state.draftAmount || '0';
   const val = parseFloat(state.draftAmount) || 0;
   quickSaveBtn.disabled = val <= 0;
-  quickSaveBtnText.textContent = val > 0 ? `Log ₹${Math.round(val)} Expense` : 'Enter Amount';
+  quickSaveBtnText.textContent = val > 0 ? `Log ₹${Math.round(val)} ${state.draftType === 'INCOME' ? 'Income' : 'Expense'}` : 'Enter Amount';
 }
 
 function renderQuickChips() {
   quickCategoryChips.innerHTML = '';
-  CATEGORIES.forEach(cat => {
+  const list = state.draftType === 'INCOME' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+  list.forEach(cat => {
     const chip = document.createElement('button');
     const isSel = state.draftCategory === cat.id;
     chip.className = `filter-chip ${isSel ? 'active' : ''}`;
     if (isSel) chip.style.background = cat.color;
-    chip.innerHTML = `<span class="material-symbols-rounded" style="font-size:16px; margin-right:4px; vertical-align:middle;">${cat.icon}</span>${cat.name}`;
+    chip.innerHTML = `<span class="material-symbols-rounded" style="font-size:15px; margin-right:4px; vertical-align:middle;">${cat.icon}</span>${cat.name}`;
     chip.addEventListener('click', () => {
       state.draftCategory = cat.id;
       renderQuickChips();
@@ -864,7 +893,7 @@ function renderQuickChips() {
     const chip = document.createElement('button');
     const isSel = state.draftPayment === mode.id;
     chip.className = `filter-chip ${isSel ? 'active' : ''}`;
-    chip.innerHTML = `<span class="material-symbols-rounded" style="font-size:16px; margin-right:4px; vertical-align:middle;">${mode.icon}</span>${mode.name}`;
+    chip.innerHTML = `<span class="material-symbols-rounded" style="font-size:15px; margin-right:4px; vertical-align:middle;">${mode.icon}</span>${mode.name}`;
     chip.addEventListener('click', () => {
       state.draftPayment = mode.id;
       renderQuickChips();
@@ -896,8 +925,8 @@ quickSaveBtn.addEventListener('click', () => {
   const amount = parseFloat(state.draftAmount);
   if (!amount || amount <= 0) return;
 
-  const catObj = CATEGORIES.find(c => c.id === state.draftCategory);
-  const title = quickTitleInput.value.trim() || `${catObj?.name || 'Expense'} Spend`;
+  const catObj = ALL_CATEGORIES.find(c => c.id === state.draftCategory);
+  const title = quickTitleInput.value.trim() || `${catObj?.name || 'Expense'}`;
 
   const newExpense = {
     id: Date.now(),
@@ -905,6 +934,7 @@ quickSaveBtn.addEventListener('click', () => {
     amount: amount,
     category: state.draftCategory,
     paymentMode: state.draftPayment,
+    type: state.draftType,
     timestamp: new Date().toISOString(),
     notes: ''
   };
@@ -912,7 +942,7 @@ quickSaveBtn.addEventListener('click', () => {
   state.addExpense(newExpense);
   closeQuickModal();
   renderAll();
-  showSnackbar(`Logged ₹${Math.round(amount)} for ${title}`);
+  showSnackbar(`Logged ₹${Math.round(amount)} (${newExpense.title})`);
 });
 
 openQuickLogFab.addEventListener('click', openQuickModal);
@@ -974,12 +1004,10 @@ themeToggleBtn.addEventListener('click', () => {
   renderBarChart();
 });
 
-// MASTER RENDER
 function renderAll() {
   renderDashboard();
   if (state.activeTab === 'tab-calendar') renderCalendar();
   if (state.activeTab === 'tab-history') renderHistory();
 }
 
-// Initial Run
 renderAll();

@@ -8,6 +8,7 @@ import androidx.room.Query
 import androidx.room.Update
 import com.antigravity.expensetracker.data.model.Category
 import com.antigravity.expensetracker.data.model.ExpenseEntity
+import com.antigravity.expensetracker.data.model.TransactionType
 import kotlinx.coroutines.flow.Flow
 import java.time.Instant
 
@@ -49,13 +50,16 @@ interface ExpenseDao {
     @Query("SELECT * FROM expenses WHERE timestamp >= :startTime AND timestamp <= :endTime ORDER BY timestamp DESC")
     fun getExpensesBetween(startTime: Instant, endTime: Instant): Flow<List<ExpenseEntity>>
 
-    @Query("SELECT COALESCE(SUM(amount), 0.0) FROM expenses WHERE timestamp >= :startTime AND timestamp <= :endTime")
+    @Query("SELECT COALESCE(SUM(amount), 0.0) FROM expenses WHERE type = 'EXPENSE' AND timestamp >= :startTime AND timestamp <= :endTime")
     fun getTotalSpentBetween(startTime: Instant, endTime: Instant): Flow<Double>
+
+    @Query("SELECT COALESCE(SUM(amount), 0.0) FROM expenses WHERE type = 'INCOME' AND timestamp >= :startTime AND timestamp <= :endTime")
+    fun getTotalIncomeBetween(startTime: Instant, endTime: Instant): Flow<Double>
 
     @Query("""
         SELECT category, SUM(amount) as total, COUNT(id) as count 
         FROM expenses 
-        WHERE timestamp >= :startTime AND timestamp <= :endTime 
+        WHERE type = 'EXPENSE' AND timestamp >= :startTime AND timestamp <= :endTime 
         GROUP BY category 
         ORDER BY total DESC
     """)

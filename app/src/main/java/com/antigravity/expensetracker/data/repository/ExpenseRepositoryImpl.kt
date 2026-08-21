@@ -4,6 +4,7 @@ import com.antigravity.expensetracker.data.local.CategorySum
 import com.antigravity.expensetracker.data.local.ExpenseDao
 import com.antigravity.expensetracker.data.model.Category
 import com.antigravity.expensetracker.data.model.ExpenseEntity
+import com.antigravity.expensetracker.data.model.TransactionType
 import com.antigravity.expensetracker.domain.model.BudgetStatus
 import com.antigravity.expensetracker.domain.model.DailySpending
 import com.antigravity.expensetracker.domain.model.DashboardSummary
@@ -11,6 +12,7 @@ import com.antigravity.expensetracker.domain.repository.ExpenseRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
@@ -66,8 +68,10 @@ class ExpenseRepositoryImpl(
         return dao.getExpensesBetween(startOfMonth, endOfMonth).map { expenses ->
             val dailyMap = mutableMapOf<LocalDate, Double>()
             for (expense in expenses) {
-                val expenseDate = expense.timestamp.atZone(zoneId).toLocalDate()
-                dailyMap[expenseDate] = (dailyMap[expenseDate] ?: 0.0) + expense.amount
+                if (expense.type == TransactionType.EXPENSE) {
+                    val expenseDate = expense.timestamp.atZone(zoneId).toLocalDate()
+                    dailyMap[expenseDate] = (dailyMap[expenseDate] ?: 0.0) + expense.amount
+                }
             }
             dailyMap
         }
@@ -88,27 +92,30 @@ class ExpenseRepositoryImpl(
         val sevenDaysAgo = today.minusDays(6)
         val startOfSevenDays = sevenDaysAgo.atStartOfDay(zoneId).toInstant()
 
-        val monthTotalFlow = dao.getTotalSpentBetween(startOfMonth, endOfMonth)
+        val monthExpenseFlow = dao.getTotalSpentBetween(startOfMonth, endOfMonth)
+        val monthIncomeFlow = dao.getTotalIncomeBetween(startOfMonth, endOfMonth)
         val todayTotalFlow = dao.getTotalSpentBetween(startOfToday, endOfToday)
         val yesterdayTotalFlow = dao.getTotalSpentBetween(startOfYesterday, endOfYesterday)
         val sevenDaysExpensesFlow = dao.getExpensesBetween(startOfSevenDays, endOfToday)
-        val recentFlow = dao.getRecentExpenses(5)
+        val recentFlow = dao.getRecentExpenses(6)
 
         return combine(
-            monthTotalFlow,
+            monthExpenseFlow,
+            monthIncomeFlow,
             todayTotalFlow,
             yesterdayTotalFlow,
             sevenDaysExpensesFlow,
             recentFlow
-        ) { monthTotal, todayTotal, yesterdayTotal, sevenDaysExpenses, recentExpenses ->
+        ) { monthExpense, monthIncome, todayTotal, yesterdayTotal, sevenDaysExpenses, recentExpenses ->
 
-            // Aggregate 7-day trend
+            val onlyExpenses7Days = sevenDaysExpenses.filter { it.type == TransactionType.EXPENSE }
+
             val dailySpendingList = (0..6).map { dayOffset ->
                 val date = sevenDaysAgo.plusDays(dayOffset.toLong())
                 val dayStart = date.atStartOfDay(zoneId).toInstant()
                 val dayEnd = date.atTime(LocalTime.MAX).atZone(zoneId).toInstant()
 
-                val dayExpenses = sevenDaysExpenses.filter { it.timestamp in dayStart..dayEnd }
+                val dayExpenses = onlyExpenses7Days.filter { it.timestamp in dayStart..dayEnd }
                 val dayTotal = dayExpenses.sumOf { it.amount }
 
                 val categoryMap = mutableMapOf<Category, Double>()
@@ -121,19 +128,21 @@ class ExpenseRepositoryImpl(
                     dayLabel = date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault()),
                     totalAmount = dayTotal,
                     isToday = date == today,
+                    isWeekend = date.dayOfWeek == DayOfWeek.SATURDAY || date.dayOfWeek == DayOfWeek.SUNDAY,
                     categoryBreakdown = categoryMap
                 )
             }
 
-            val runningTotal7Days = sevenDaysExpenses.sumOf { it.amount }
+            val runningTotal7Days = onlyExpenses7Days.sumOf { it.amount }
             val budgetStatus = BudgetStatus(
                 monthlyBudget = 35000.0,
-                totalSpentThisMonth = monthTotal,
+                totalSpentThisMonth = monthExpense,
                 dailyLimit = 1200.0
             )
 
             DashboardSummary(
-                totalSpentMonth = monthTotal,
+                totalSpentMonth = monthExpense,
+                totalIncomeMonth = monthIncome,
                 todaySpent = todayTotal,
                 yesterdaySpent = yesterdayTotal,
                 runningTotal7Days = runningTotal7Days,

@@ -2,6 +2,7 @@ package com.antigravity.expensetracker.ui.screens.calendar
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,7 +22,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.CheckCircleOutline
-import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -66,7 +66,7 @@ fun CalendarSpendingScreen(
     val heroGradient = if (isDark) {
         Brush.linearGradient(listOf(DarkCardGradientStart, DarkCardGradientEnd))
     } else {
-        Brush.linearGradient(listOf(Color(0xFFEDE7F6), Color(0xFFD1C4E9)))
+        Brush.linearGradient(listOf(Color(0xFFF8FAFC), Color(0xFFF1F5F9)))
     }
 
     Scaffold(
@@ -87,8 +87,8 @@ fun CalendarSpendingScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding),
-                contentPadding = PaddingValues(horizontal = 18.dp, vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                contentPadding = PaddingValues(horizontal = 18.dp, vertical = 14.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 // Screen Title
                 item {
@@ -100,18 +100,18 @@ fun CalendarSpendingScreen(
                             imageVector = Icons.Rounded.CalendarMonth,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(28.dp)
+                            modifier = Modifier.size(26.dp)
                         )
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
                             Text(
-                                text = "Spending Calendar",
+                                text = "Spending Heatmap",
                                 style = MaterialTheme.typography.headlineMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = "Tap any date to inspect daily itemized expenses",
+                                text = "Tap any date to inspect day activity",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -142,7 +142,7 @@ fun CalendarSpendingScreen(
                             .clip(RoundedCornerShape(20.dp))
                             .border(
                                 1.dp,
-                                MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                                MaterialTheme.colorScheme.outline.copy(alpha = 0.25f),
                                 RoundedCornerShape(20.dp)
                             ),
                         shape = RoundedCornerShape(20.dp),
@@ -156,10 +156,10 @@ fun CalendarSpendingScreen(
                             Column {
                                 Text(
                                     text = calendarState.selectedDate.format(selectedDateFormatter).uppercase(),
-                                    style = MaterialTheme.typography.labelMedium,
+                                    style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     fontWeight = FontWeight.Bold,
-                                    letterSpacing = 0.5.sp
+                                    letterSpacing = 0.8.sp
                                 )
 
                                 Spacer(modifier = Modifier.height(6.dp))
@@ -205,7 +205,7 @@ fun CalendarSpendingScreen(
                 // 3. Itemized Breakdown for Selected Date
                 item {
                     Text(
-                        text = "Itemized Daily Breakdown",
+                        text = "Day Activity Breakdown",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface,
@@ -219,7 +219,7 @@ fun CalendarSpendingScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(16.dp)),
-                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
                         ) {
                             Row(
                                 modifier = Modifier
@@ -231,18 +231,18 @@ fun CalendarSpendingScreen(
                                     imageVector = Icons.Rounded.CheckCircleOutline,
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(28.dp)
+                                    modifier = Modifier.size(26.dp)
                                 )
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column {
                                     Text(
-                                        text = "No expenses on this date",
-                                        style = MaterialTheme.typography.titleMedium,
+                                        text = "Zero spend recorded",
+                                        style = MaterialTheme.typography.titleSmall,
                                         fontWeight = FontWeight.SemiBold,
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
                                     Text(
-                                        text = "Zero spend recorded for ${calendarState.selectedDate.dayOfMonth} ${calendarState.selectedDate.month.name.lowercase().replaceFirstChar { it.uppercase() }}",
+                                        text = "No transactions logged on this date",
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -255,10 +255,16 @@ fun CalendarSpendingScreen(
                         items = calendarState.selectedDayExpenses,
                         key = { it.id }
                     ) { expense ->
-                        TransactionItem(
-                            expense = expense,
-                            onDelete = { viewModel.onEvent(ExpenseEvent.OnDeleteExpense(it)) }
-                        )
+                        Box(
+                            modifier = Modifier.clickable {
+                                viewModel.onEvent(ExpenseEvent.OnSelectExpenseForEdit(expense))
+                            }
+                        ) {
+                            TransactionItem(
+                                expense = expense,
+                                onDelete = { viewModel.onEvent(ExpenseEvent.OnDeleteExpense(it)) }
+                            )
+                        }
                     }
                 }
 

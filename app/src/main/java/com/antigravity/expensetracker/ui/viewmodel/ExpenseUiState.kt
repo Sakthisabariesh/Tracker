@@ -3,7 +3,7 @@ package com.antigravity.expensetracker.ui.viewmodel
 import com.antigravity.expensetracker.data.model.Category
 import com.antigravity.expensetracker.data.model.ExpenseEntity
 import com.antigravity.expensetracker.data.model.PaymentMode
-import com.antigravity.expensetracker.domain.model.DailySpending
+import com.antigravity.expensetracker.data.model.TransactionType
 import com.antigravity.expensetracker.domain.model.DashboardSummary
 import java.time.LocalDate
 
@@ -24,8 +24,10 @@ data class HistoryUiState(
     val selectedFilterRange: DateFilterRange = DateFilterRange.THIS_MONTH,
     val selectedCategory: Category? = null,
     val selectedPaymentMode: PaymentMode? = null,
+    val selectedType: TransactionType? = null,
     val expenses: List<ExpenseEntity> = emptyList(),
     val totalFilteredSpend: Double = 0.0,
+    val totalFilteredIncome: Double = 0.0,
     val isLoading: Boolean = false
 )
 
@@ -43,6 +45,7 @@ data class QuickLogDraft(
     val title: String = "",
     val category: Category = Category.FOOD,
     val paymentMode: PaymentMode = PaymentMode.UPI,
+    val type: TransactionType = TransactionType.EXPENSE,
     val date: LocalDate = LocalDate.now(),
     val notes: String = ""
 ) {

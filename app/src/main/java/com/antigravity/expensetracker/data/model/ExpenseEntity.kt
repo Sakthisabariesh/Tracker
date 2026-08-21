@@ -10,6 +10,7 @@ import java.time.Instant
     indices = [
         Index(value = ["timestamp"]),
         Index(value = ["category"]),
+        Index(value = ["type"]),
         Index(value = ["paymentMode"])
     ]
 )
@@ -20,6 +21,7 @@ data class ExpenseEntity(
     val amount: Double,
     val category: Category,
     val paymentMode: PaymentMode,
+    val type: TransactionType = TransactionType.EXPENSE,
     val timestamp: Instant = Instant.now(),
     val notes: String = ""
 )

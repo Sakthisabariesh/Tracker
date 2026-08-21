@@ -4,16 +4,25 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Outer Glow Circle -->
+
+    <!-- Ambient Emerald Shadow / Halo -->
     <path
-        android:fillColor="#1500C853"
-        android:pathData="M54,54m-38,0a38,38 0,1 1,76 0a38,38 0,1 1,-76 0" />
-    <!-- Main Emerald Ring -->
+        android:fillColor="#1500E676"
+        android:pathData="M54,54m-34,0a34,34 0,1 1,68 0a34,34 0,1 1,-68 0" />
+
+    <!-- Sleek Geometric Precision Diamond Archetype -->
+    <!-- Left Wing (Titanium Silver) -->
     <path
-        android:fillColor="#00C853"
-        android:pathData="M54,54m-28,0a28,28 0,1 1,56 0a28,28 0,1 1,-56 0" />
-    <!-- Pulse Line / Lightning Icon In Center -->
+        android:fillColor="#E2E8F0"
+        android:pathData="M54,28 L36,54 L54,80 L48,80 L30,54 L48,28 Z" />
+
+    <!-- Right Wing (Vibrant Emerald) -->
+    <path
+        android:fillColor="#00E676"
+        android:pathData="M54,28 L72,54 L54,80 L60,80 L78,54 L60,28 Z" />
+
+    <!-- Core Center Prism Pivot -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M51,32L38,54h14l-3,22l19,-24H54l4,-20z" />
+        android:pathData="M54,42 L62,54 L54,66 L46,54 Z" />
 </vector>
