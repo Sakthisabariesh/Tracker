@@ -19,7 +19,7 @@ class MainActivity : ComponentActivity() {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 val app = application as ExpenseTrackerApp
-                return ExpenseViewModel(app.repository) as T
+                return ExpenseViewModel(app.repository, app.userPreferences) as T
             }
         }
     }

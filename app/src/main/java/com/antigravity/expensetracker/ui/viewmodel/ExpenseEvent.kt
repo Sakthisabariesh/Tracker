@@ -18,9 +18,18 @@ sealed interface ExpenseEvent {
     data object OnSaveExpense : ExpenseEvent
     data object OnResetDraft : ExpenseEvent
 
+    // Edit Existing Expense
+    data class OnSelectExpenseForEdit(val expense: ExpenseEntity?) : ExpenseEvent
+    data class OnUpdateExpense(val expense: ExpenseEntity) : ExpenseEvent
+
+    // Budget Settings
+    data class OnUpdateMonthlyBudget(val budget: Double) : ExpenseEvent
+    data class OnUpdateDailyLimit(val limit: Double) : ExpenseEvent
+
     // Deletion & Undo
     data class OnDeleteExpense(val expense: ExpenseEntity) : ExpenseEvent
     data object OnUndoDelete : ExpenseEvent
+    data object OnClearAllExpenses : ExpenseEvent
 
     // History Filtering
     data class OnSearchQueryChange(val query: String) : ExpenseEvent

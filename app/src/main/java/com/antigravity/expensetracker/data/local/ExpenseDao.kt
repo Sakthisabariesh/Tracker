@@ -34,6 +34,9 @@ interface ExpenseDao {
     @Query("DELETE FROM expenses WHERE id = :id")
     suspend fun deleteById(id: Long)
 
+    @Query("DELETE FROM expenses")
+    suspend fun deleteAllExpenses()
+
     @Query("SELECT * FROM expenses WHERE id = :id")
     suspend fun getExpenseById(id: Long): ExpenseEntity?
 

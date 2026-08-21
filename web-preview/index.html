@@ -31,9 +31,14 @@
             <h1 class="brand-title">ExpensePulse</h1>
             <p class="brand-subtitle">Zero-friction spend intelligence</p>
           </div>
-          <button id="themeToggleBtn" class="icon-btn" title="Toggle Theme">
-            <span class="material-symbols-rounded" id="themeIcon">light_mode</span>
-          </button>
+          <div style="display: flex; gap: 8px;">
+            <button id="openSettingsBtn" class="icon-btn" title="Settings & Caps">
+              <span class="material-symbols-rounded">settings</span>
+            </button>
+            <button id="themeToggleBtn" class="icon-btn" title="Toggle Theme">
+              <span class="material-symbols-rounded" id="themeIcon">light_mode</span>
+            </button>
+          </div>
         </header>
 
         <!-- Hero Card -->
@@ -42,7 +47,7 @@
             <span class="hero-label">TOTAL SPENT THIS MONTH</span>
             <span class="delta-badge" id="heroDeltaBadge">
               <span class="material-symbols-rounded badge-icon" id="heroDeltaIcon">trending_up</span>
-              <span id="heroDeltaText">+12% vs y'day</span>
+              <span id="heroDeltaText">Today: ₹0</span>
             </span>
           </div>
           <div class="hero-amount" id="heroTotalMonth">₹0</div>
@@ -72,7 +77,12 @@
               <span class="budget-title">Monthly Budget</span>
               <span class="material-symbols-rounded text-warning alert-icon" id="budgetAlertIcon" style="display: none;">warning</span>
             </div>
-            <span class="budget-percent" id="budgetPercent">0% Used</span>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span class="budget-percent" id="budgetPercent">0% Used</span>
+              <button id="editBudgetQuickBtn" class="icon-btn-sm" title="Edit Budget Cap">
+                <span class="material-symbols-rounded" style="font-size: 16px;">edit</span>
+              </button>
+            </div>
           </div>
           <div class="budget-body">
             <div class="progress-ring-box">
@@ -88,7 +98,7 @@
               </div>
               <div class="stat-row text-muted">
                 <span>Budget Cap:</span>
-                <span>₹35,000</span>
+                <span id="budgetCapDisplay">₹35,000</span>
               </div>
               <p class="budget-warning-text" id="budgetWarningText" style="display: none;"></p>
             </div>
@@ -104,7 +114,7 @@
             </div>
             <div class="chart-limit-legend">
               <span class="legend-dot"></span>
-              <span>Limit: ₹1,200</span>
+              <span id="chartLimitLabel">Limit: ₹1,200</span>
             </div>
           </div>
           <div class="chart-container">
@@ -268,6 +278,68 @@
           <button id="quickSaveBtn" class="primary-btn" disabled>
             <span class="material-symbols-rounded">check</span>
             <span id="quickSaveBtnText">Enter Amount</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Transaction Modal -->
+    <div id="editTransactionModal" class="bottom-sheet-backdrop">
+      <div class="bottom-sheet">
+        <div class="sheet-drag-handle"></div>
+        <div class="sheet-content">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <h3 style="font-size: 16px; font-weight: 800;">Edit Transaction</h3>
+            <button id="deleteInEditModalBtn" class="outline-btn" style="color: var(--spending-red); border-color: var(--spending-red);">
+              <span class="material-symbols-rounded" style="font-size: 16px;">delete</span>
+              <span>Delete</span>
+            </button>
+          </div>
+
+          <label class="sheet-chips-label">AMOUNT (₹)</label>
+          <input type="number" id="editAmountInput" class="text-input" placeholder="Amount" />
+
+          <label class="sheet-chips-label">TITLE</label>
+          <input type="text" id="editTitleInput" class="text-input" placeholder="Title" />
+
+          <label class="sheet-chips-label">CATEGORY</label>
+          <div class="chips-scroll" id="editCategoryChips"></div>
+
+          <label class="sheet-chips-label" style="margin-top: 10px;">PAYMENT MODE</label>
+          <div class="chips-scroll" id="editPaymentChips"></div>
+
+          <label class="sheet-chips-label" style="margin-top: 10px;">NOTES</label>
+          <input type="text" id="editNotesInput" class="text-input" placeholder="Notes (optional)" />
+
+          <button id="saveEditBtn" class="primary-btn" style="margin-top: 14px;">
+            <span class="material-symbols-rounded">save</span>
+            <span>Save Changes</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings & Budget Modal -->
+    <div id="settingsModal" class="bottom-sheet-backdrop">
+      <div class="bottom-sheet">
+        <div class="sheet-drag-handle"></div>
+        <div class="sheet-content">
+          <h3 style="font-size: 17px; font-weight: 800; margin-bottom: 14px;">Budget Settings & Data</h3>
+
+          <label class="sheet-chips-label">MONTHLY BUDGET CAP (₹)</label>
+          <input type="number" id="settingsMonthlyBudgetInput" class="text-input" placeholder="35000" />
+
+          <label class="sheet-chips-label">DAILY TARGET SPENDING LIMIT (₹)</label>
+          <input type="number" id="settingsDailyLimitInput" class="text-input" placeholder="1200" />
+
+          <button id="saveSettingsBtn" class="primary-btn" style="margin: 14px 0 10px;">
+            <span class="material-symbols-rounded">save</span>
+            <span>Update Budget Caps</span>
+          </button>
+
+          <button id="clearAllDataBtn" class="outline-btn" style="width: 100%; justify-content: center; color: var(--spending-red); border-color: var(--spending-red); padding: 12px; font-weight: 800;">
+            <span class="material-symbols-rounded">delete_sweep</span>
+            <span>Clear All Data (Start from ₹0)</span>
           </button>
         </div>
       </div>

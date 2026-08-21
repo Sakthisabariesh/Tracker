@@ -1,5 +1,6 @@
 package com.antigravity.expensetracker.ui.screens.home
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,14 +15,22 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.DeleteSweep
 import androidx.compose.material.icons.rounded.Receipt
+import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
@@ -41,12 +50,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.antigravity.expensetracker.data.model.ExpenseEntity
 import com.antigravity.expensetracker.ui.components.BudgetProgressCard
+import com.antigravity.expensetracker.ui.components.EditExpenseDialog
 import com.antigravity.expensetracker.ui.components.HeroMetricsCard
 import com.antigravity.expensetracker.ui.components.SpendingBarChart
 import com.antigravity.expensetracker.ui.components.TransactionItem
+import com.antigravity.expensetracker.ui.theme.SpendingRed
 import com.antigravity.expensetracker.ui.viewmodel.DashboardUiState
 import com.antigravity.expensetracker.ui.viewmodel.ExpenseEvent
 import com.antigravity.expensetracker.ui.viewmodel.ExpenseViewModel
@@ -62,11 +74,17 @@ fun HomeScreen(
 ) {
     val dashboardState by viewModel.dashboardUiState.collectAsState()
     val quickDraft by viewModel.quickLogDraft.collectAsState()
+    val editingExpense by viewModel.editingExpense.collectAsState()
+
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
     var isBottomSheetOpen by remember { mutableStateOf(false) }
+    var isSettingsDialogOpen by remember { mutableStateOf(false) }
+    var isConfirmClearDialogOpen by remember { mutableStateOf(false) }
+
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val editSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     // Listen for user feedback / undo messages
     LaunchedEffect(key1 = true) {
@@ -140,7 +158,7 @@ fun HomeScreen(
                     contentPadding = PaddingValues(horizontal = 18.dp, vertical = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Header App Brand
+                    // Header App Brand with Settings button
                     item {
                         Row(
                             modifier = Modifier
@@ -162,6 +180,16 @@ fun HomeScreen(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
+
+                            IconButton(
+                                onClick = { isSettingsDialogOpen = true }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Settings,
+                                    contentDescription = "Settings",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
 
@@ -170,9 +198,12 @@ fun HomeScreen(
                         HeroMetricsCard(summary = summary)
                     }
 
-                    // 2. Monthly Budget Progress Card
+                    // 2. Monthly Budget Progress Card (with in-place budget edit)
                     item {
-                        BudgetProgressCard(budgetStatus = summary.budgetStatus)
+                        BudgetProgressCard(
+                            budgetStatus = summary.budgetStatus,
+                            onUpdateBudget = { viewModel.onEvent(ExpenseEvent.OnUpdateMonthlyBudget(it)) }
+                        )
                     }
 
                     // 3. 7-Day Spending Bar Chart (Compose Canvas 120Hz)
@@ -208,7 +239,7 @@ fun HomeScreen(
                         }
                     }
 
-                    // 5. Recent 5 Transactions Feed (with Swipe to delete)
+                    // 5. Recent 5 Transactions Feed (with Tap to Edit & Swipe to delete)
                     if (summary.recentTransactions.isEmpty()) {
                         item {
                             Column(
@@ -229,6 +260,11 @@ fun HomeScreen(
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
+                                Text(
+                                    text = "Tap the + button to log your first spend",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                )
                             }
                         }
                     } else {
@@ -236,10 +272,16 @@ fun HomeScreen(
                             items = summary.recentTransactions,
                             key = { it.id }
                         ) { expense ->
-                            TransactionItem(
-                                expense = expense,
-                                onDelete = { viewModel.onEvent(ExpenseEvent.OnDeleteExpense(it)) }
-                            )
+                            Box(
+                                modifier = Modifier.clickable {
+                                    viewModel.onEvent(ExpenseEvent.OnSelectExpenseForEdit(expense))
+                                }
+                            ) {
+                                TransactionItem(
+                                    expense = expense,
+                                    onDelete = { viewModel.onEvent(ExpenseEvent.OnDeleteExpense(it)) }
+                                )
+                            }
                         }
                     }
 
@@ -250,6 +292,7 @@ fun HomeScreen(
             }
         }
 
+        // Quick Log Bottom Sheet
         if (isBottomSheetOpen) {
             AddExpenseBottomSheet(
                 sheetState = sheetState,
@@ -259,6 +302,112 @@ fun HomeScreen(
                     scope.launch { sheetState.hide() }.invokeOnCompletion {
                         isBottomSheetOpen = false
                         viewModel.onEvent(ExpenseEvent.OnResetDraft)
+                    }
+                }
+            )
+        }
+
+        // Edit Expense Modal
+        editingExpense?.let { expense ->
+            EditExpenseDialog(
+                expense = expense,
+                sheetState = editSheetState,
+                onSave = { viewModel.onEvent(ExpenseEvent.OnUpdateExpense(it)) },
+                onDelete = { viewModel.onEvent(ExpenseEvent.OnDeleteExpense(it)) },
+                onDismiss = { viewModel.onEvent(ExpenseEvent.OnSelectExpenseForEdit(null)) }
+            )
+        }
+
+        // Settings Dialog (Budget & Data Management)
+        if (isSettingsDialogOpen && dashboardState is DashboardUiState.Success) {
+            val summary = (dashboardState as DashboardUiState.Success).summary
+            var budgetInput by remember { mutableStateOf(summary.budgetStatus.monthlyBudget.toInt().toString()) }
+            var limitInput by remember { mutableStateOf(summary.budgetStatus.dailyLimit.toInt().toString()) }
+
+            AlertDialog(
+                onDismissRequest = { isSettingsDialogOpen = false },
+                title = { Text("App Settings & Caps") },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                        OutlinedTextField(
+                            value = budgetInput,
+                            onValueChange = { budgetInput = it.filter { c -> c.isDigit() } },
+                            label = { Text("Monthly Budget Cap (₹)") },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        OutlinedTextField(
+                            value = limitInput,
+                            onValueChange = { limitInput = it.filter { c -> c.isDigit() } },
+                            label = { Text("Daily Target Limit (₹)") },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        // Reset / Wipe Data Button
+                        OutlinedButton(
+                            onClick = {
+                                isSettingsDialogOpen = false
+                                isConfirmClearDialogOpen = true
+                            },
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(imageVector = Icons.Rounded.DeleteSweep, contentDescription = null, tint = SpendingRed)
+                            Spacer(modifier = Modifier.size(6.dp))
+                            Text("Clear All Data (Start Fresh)", color = SpendingRed)
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            budgetInput.toDoubleOrNull()?.let {
+                                viewModel.onEvent(ExpenseEvent.OnUpdateMonthlyBudget(it))
+                            }
+                            limitInput.toDoubleOrNull()?.let {
+                                viewModel.onEvent(ExpenseEvent.OnUpdateDailyLimit(it))
+                            }
+                            isSettingsDialogOpen = false
+                        }
+                    ) {
+                        Text("Save Caps")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { isSettingsDialogOpen = false }) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
+
+        // Confirmation Dialog to Clear Sample Data
+        if (isConfirmClearDialogOpen) {
+            AlertDialog(
+                onDismissRequest = { isConfirmClearDialogOpen = false },
+                title = { Text("Clear All Expenses?") },
+                text = {
+                    Text("This will remove all sample/logged transactions so you can start completely fresh with zero expenses.")
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            viewModel.onEvent(ExpenseEvent.OnClearAllExpenses)
+                            isConfirmClearDialogOpen = false
+                        }
+                    ) {
+                        Text("Yes, Clear All", color = SpendingRed, fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { isConfirmClearDialogOpen = false }) {
+                        Text("Cancel")
                     }
                 }
             )

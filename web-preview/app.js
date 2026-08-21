@@ -16,7 +16,7 @@ const PAYMENT_MODES = [
   { id: 'DEBIT_CARD', name: 'Debit Card', tag: 'BANK', icon: 'account_balance_wallet' }
 ];
 
-// Initial Seed Data
+// Initial Seed Data (Only if no local storage exists)
 const DEFAULT_EXPENSES = [
   { id: 1, title: 'Healthy Brunch & Coffee', amount: 380, category: 'FOOD', paymentMode: 'UPI', timestamp: new Date(Date.now() - 2 * 3600000).toISOString(), notes: 'Blue Tokai Coffee' },
   { id: 2, title: 'Cab to Office', amount: 220, category: 'TRAVEL', paymentMode: 'UPI', timestamp: new Date(Date.now() - 5 * 3600000).toISOString(), notes: 'Ola Prime' },
@@ -33,12 +33,13 @@ const DEFAULT_EXPENSES = [
 class ExpenseAppState {
   constructor() {
     this.expenses = this.loadExpenses();
-    this.monthlyBudget = 35000;
-    this.dailyLimit = 1200;
+    this.monthlyBudget = parseFloat(localStorage.getItem('expense_monthly_budget')) || 35000;
+    this.dailyLimit = parseFloat(localStorage.getItem('expense_daily_limit')) || 1200;
     this.selectedCalendarMonth = new Date();
     this.selectedCalendarDate = new Date();
     this.selectedBarIndex = null;
     this.deletedExpense = null;
+    this.editingExpense = null;
     this.activeTab = 'tab-home';
 
     // Quick Log Draft
@@ -55,7 +56,7 @@ class ExpenseAppState {
 
   loadExpenses() {
     const saved = localStorage.getItem('expenses_data');
-    if (saved) {
+    if (saved !== null) {
       try { return JSON.parse(saved); } catch (e) { }
     }
     return DEFAULT_EXPENSES;
@@ -65,9 +66,29 @@ class ExpenseAppState {
     localStorage.setItem('expenses_data', JSON.stringify(this.expenses));
   }
 
+  saveCaps(budget, limit) {
+    this.monthlyBudget = budget;
+    this.dailyLimit = limit;
+    localStorage.setItem('expense_monthly_budget', budget.toString());
+    localStorage.setItem('expense_daily_limit', limit.toString());
+  }
+
+  clearAllData() {
+    this.expenses = [];
+    this.saveExpenses();
+  }
+
   addExpense(item) {
     this.expenses.unshift(item);
     this.saveExpenses();
+  }
+
+  updateExpense(item) {
+    const idx = this.expenses.findIndex(e => e.id === item.id);
+    if (idx !== -1) {
+      this.expenses[idx] = item;
+      this.saveExpenses();
+    }
   }
 
   deleteExpense(id) {
@@ -101,10 +122,13 @@ const heroDeltaText = document.getElementById('heroDeltaText');
 const budgetPercent = document.getElementById('budgetPercent');
 const ringIndicator = document.getElementById('ringIndicator');
 const budgetRemaining = document.getElementById('budgetRemaining');
+const budgetCapDisplay = document.getElementById('budgetCapDisplay');
 const budgetAlertIcon = document.getElementById('budgetAlertIcon');
 const budgetWarningText = document.getElementById('budgetWarningText');
+const editBudgetQuickBtn = document.getElementById('editBudgetQuickBtn');
 
 const barChartCanvas = document.getElementById('barChartCanvas');
+const chartLimitLabel = document.getElementById('chartLimitLabel');
 const chartDetailOverlay = document.getElementById('chartDetailOverlay');
 const detailDate = document.getElementById('detailDate');
 const detailTotal = document.getElementById('detailTotal');
@@ -133,6 +157,24 @@ const quickPaymentChips = document.getElementById('quickPaymentChips');
 const quickTitleInput = document.getElementById('quickTitleInput');
 const quickSaveBtn = document.getElementById('quickSaveBtn');
 const quickSaveBtnText = document.getElementById('quickSaveBtnText');
+
+// Edit Modal Elements
+const editTransactionModal = document.getElementById('editTransactionModal');
+const editAmountInput = document.getElementById('editAmountInput');
+const editTitleInput = document.getElementById('editTitleInput');
+const editCategoryChips = document.getElementById('editCategoryChips');
+const editPaymentChips = document.getElementById('editPaymentChips');
+const editNotesInput = document.getElementById('editNotesInput');
+const saveEditBtn = document.getElementById('saveEditBtn');
+const deleteInEditModalBtn = document.getElementById('deleteInEditModalBtn');
+
+// Settings Modal Elements
+const settingsModal = document.getElementById('settingsModal');
+const openSettingsBtn = document.getElementById('openSettingsBtn');
+const settingsMonthlyBudgetInput = document.getElementById('settingsMonthlyBudgetInput');
+const settingsDailyLimitInput = document.getElementById('settingsDailyLimitInput');
+const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+const clearAllDataBtn = document.getElementById('clearAllDataBtn');
 
 const snackbar = document.getElementById('snackbar');
 const snackbarText = document.getElementById('snackbarText');
@@ -211,8 +253,10 @@ function renderDashboard() {
   budgetPercent.textContent = `${Math.round(pct)}% Used`;
   const remaining = Math.max(state.monthlyBudget - totalMonth, 0);
   budgetRemaining.textContent = formatINR(remaining);
+  budgetCapDisplay.textContent = formatINR(state.monthlyBudget);
+  chartLimitLabel.textContent = `Limit: ${formatINR(state.dailyLimit)}`;
 
-  // Stroke Dashoffset (Circumference = 2 * PI * 22 ≈ 138.2)
+  // Stroke Dashoffset
   const offset = 138.2 - (138.2 * Math.min(pct, 100)) / 100;
   ringIndicator.style.strokeDashoffset = offset;
 
@@ -343,7 +387,6 @@ function renderBarChart() {
     ctx.fillText(d.label, x + barWidth / 2, h - 6);
   });
 
-  // Store for click detection
   barChartCanvas._dayData = dayData;
   barChartCanvas._barSlot = barSlot;
 }
@@ -404,9 +447,10 @@ function renderRecentTransactions() {
 
   if (recent.length === 0) {
     recentTransactionsList.innerHTML = `
-      <div style="text-align:center; padding: 20px; color:var(--text-muted);">
-        <span class="material-symbols-rounded" style="font-size:40px; opacity:0.4;">receipt</span>
-        <p style="font-size:13px; margin-top:6px;">No expenses logged yet</p>
+      <div style="text-align:center; padding: 24px; color:var(--text-muted);">
+        <span class="material-symbols-rounded" style="font-size:42px; opacity:0.4;">receipt</span>
+        <p style="font-size:14px; font-weight:700; color:var(--text); margin-top:6px;">No expenses logged yet</p>
+        <p style="font-size:12px; margin-top:2px;">Tap the + button to log your first spend</p>
       </div>`;
     return;
   }
@@ -424,6 +468,7 @@ function createTransactionCard(tx) {
 
   const card = document.createElement('div');
   card.className = 'transaction-card';
+  card.style.cursor = 'pointer';
   card.innerHTML = `
     <div class="tx-icon-badge" style="background: ${cat.color}20; color: ${cat.color}">
       <span class="material-symbols-rounded">${cat.icon}</span>
@@ -440,6 +485,12 @@ function createTransactionCard(tx) {
     <button class="tx-delete-btn" title="Delete"><span class="material-symbols-rounded">delete</span></button>
   `;
 
+  // Tap to edit
+  card.addEventListener('click', (e) => {
+    if (e.target.closest('.tx-delete-btn')) return;
+    openEditModal(tx);
+  });
+
   card.querySelector('.tx-delete-btn').addEventListener('click', (e) => {
     e.stopPropagation();
     state.deleteExpense(tx.id);
@@ -449,6 +500,130 @@ function createTransactionCard(tx) {
 
   return card;
 }
+
+// EDIT TRANSACTION MODAL
+let activeEditCategory = 'FOOD';
+let activeEditPayment = 'UPI';
+
+function openEditModal(tx) {
+  state.editingExpense = tx;
+  editAmountInput.value = tx.amount;
+  editTitleInput.value = tx.title;
+  editNotesInput.value = tx.notes || '';
+  activeEditCategory = tx.category;
+  activeEditPayment = tx.paymentMode;
+
+  renderEditCategoryChips();
+  renderEditPaymentChips();
+  editTransactionModal.classList.add('open');
+}
+
+function closeEditModal() {
+  editTransactionModal.classList.remove('open');
+  state.editingExpense = null;
+}
+
+function renderEditCategoryChips() {
+  editCategoryChips.innerHTML = '';
+  CATEGORIES.forEach(cat => {
+    const chip = document.createElement('button');
+    const isSel = activeEditCategory === cat.id;
+    chip.className = `filter-chip ${isSel ? 'active' : ''}`;
+    if (isSel) chip.style.background = cat.color;
+    chip.innerHTML = `<span class="material-symbols-rounded" style="font-size:16px; margin-right:4px; vertical-align:middle;">${cat.icon}</span>${cat.name}`;
+    chip.addEventListener('click', () => {
+      activeEditCategory = cat.id;
+      renderEditCategoryChips();
+    });
+    editCategoryChips.appendChild(chip);
+  });
+}
+
+function renderEditPaymentChips() {
+  editPaymentChips.innerHTML = '';
+  PAYMENT_MODES.forEach(mode => {
+    const chip = document.createElement('button');
+    const isSel = activeEditPayment === mode.id;
+    chip.className = `filter-chip ${isSel ? 'active' : ''}`;
+    chip.innerHTML = `<span class="material-symbols-rounded" style="font-size:16px; margin-right:4px; vertical-align:middle;">${mode.icon}</span>${mode.name}`;
+    chip.addEventListener('click', () => {
+      activeEditPayment = mode.id;
+      renderEditPaymentChips();
+    });
+    editPaymentChips.appendChild(chip);
+  });
+}
+
+saveEditBtn.addEventListener('click', () => {
+  if (!state.editingExpense) return;
+  const amount = parseFloat(editAmountInput.value);
+  if (!amount || amount <= 0) return;
+
+  const catObj = CATEGORIES.find(c => c.id === activeEditCategory);
+  const updated = {
+    ...state.editingExpense,
+    title: editTitleInput.value.trim() || `${catObj?.name || 'Expense'} Spend`,
+    amount: amount,
+    category: activeEditCategory,
+    paymentMode: activeEditPayment,
+    notes: editNotesInput.value.trim()
+  };
+
+  state.updateExpense(updated);
+  closeEditModal();
+  renderAll();
+  showSnackbar(`Updated ${updated.title}`);
+});
+
+deleteInEditModalBtn.addEventListener('click', () => {
+  if (!state.editingExpense) return;
+  const id = state.editingExpense.id;
+  const title = state.editingExpense.title;
+  state.deleteExpense(id);
+  closeEditModal();
+  renderAll();
+  showSnackbar(`Deleted ${title}`, true);
+});
+
+editTransactionModal.addEventListener('click', (e) => {
+  if (e.target === editTransactionModal) closeEditModal();
+});
+
+// SETTINGS & BUDGET CAPS MODAL
+function openSettingsModal() {
+  settingsMonthlyBudgetInput.value = state.monthlyBudget;
+  settingsDailyLimitInput.value = state.dailyLimit;
+  settingsModal.classList.add('open');
+}
+
+function closeSettingsModal() {
+  settingsModal.classList.remove('open');
+}
+
+openSettingsBtn.addEventListener('click', openSettingsModal);
+editBudgetQuickBtn.addEventListener('click', openSettingsModal);
+
+saveSettingsBtn.addEventListener('click', () => {
+  const budget = parseFloat(settingsMonthlyBudgetInput.value) || 35000;
+  const limit = parseFloat(settingsDailyLimitInput.value) || 1200;
+  state.saveCaps(budget, limit);
+  closeSettingsModal();
+  renderAll();
+  showSnackbar('Budget caps updated successfully!');
+});
+
+clearAllDataBtn.addEventListener('click', () => {
+  if (confirm('Are you sure you want to clear all expenses and start fresh from ₹0?')) {
+    state.clearAllData();
+    closeSettingsModal();
+    renderAll();
+    showSnackbar('All data cleared. Fresh start ready!');
+  }
+});
+
+settingsModal.addEventListener('click', (e) => {
+  if (e.target === settingsModal) closeSettingsModal();
+});
 
 // RENDER CALENDAR INSPECTOR
 function renderCalendar() {
@@ -474,7 +649,6 @@ function renderCalendar() {
 
   calendarDaysGrid.innerHTML = '';
 
-  // Leading empty slots
   for (let i = 0; i < startDay; i++) {
     const empty = document.createElement('div');
     empty.className = 'cal-day-cell empty';
@@ -506,7 +680,6 @@ function renderCalendar() {
     calendarDaysGrid.appendChild(cell);
   }
 
-  // Render Selected Date Inspector details
   const sel = state.selectedCalendarDate;
   calendarSelectedDateLabel.textContent = sel.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase();
 
@@ -607,7 +780,6 @@ function renderHistoryCategoryChips() {
   });
 }
 
-// Search input
 historySearchInput.addEventListener('input', (e) => {
   state.historyQuery = e.target.value;
   searchClearBtn.style.display = state.historyQuery ? 'flex' : 'none';
@@ -620,7 +792,6 @@ searchClearBtn.addEventListener('click', () => {
   renderHistory();
 });
 
-// Date Range Filter Chips
 document.querySelectorAll('[data-range]').forEach(chip => {
   chip.addEventListener('click', () => {
     document.querySelectorAll('[data-range]').forEach(c => c.classList.remove('active'));

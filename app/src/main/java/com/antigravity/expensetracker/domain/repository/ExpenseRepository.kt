@@ -15,6 +15,7 @@ interface ExpenseRepository {
     suspend fun updateExpense(expense: ExpenseEntity)
     suspend fun deleteExpense(expense: ExpenseEntity)
     suspend fun deleteExpenseById(id: Long)
+    suspend fun deleteAllExpenses()
     suspend fun getExpenseById(id: Long): ExpenseEntity?
 
     fun getAllExpenses(): Flow<List<ExpenseEntity>>

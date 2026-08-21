@@ -33,6 +33,8 @@ class ExpenseRepositoryImpl(
 
     override suspend fun deleteExpenseById(id: Long) = dao.deleteById(id)
 
+    override suspend fun deleteAllExpenses() = dao.deleteAllExpenses()
+
     override suspend fun getExpenseById(id: Long): ExpenseEntity? = dao.getExpenseById(id)
 
     override fun getAllExpenses(): Flow<List<ExpenseEntity>> = dao.getAllExpenses()

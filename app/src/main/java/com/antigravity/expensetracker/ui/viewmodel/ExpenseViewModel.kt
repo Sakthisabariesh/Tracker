@@ -2,9 +2,11 @@ package com.antigravity.expensetracker.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.antigravity.expensetracker.data.local.UserPreferences
 import com.antigravity.expensetracker.data.model.Category
 import com.antigravity.expensetracker.data.model.ExpenseEntity
 import com.antigravity.expensetracker.data.model.PaymentMode
+import com.antigravity.expensetracker.domain.model.BudgetStatus
 import com.antigravity.expensetracker.domain.model.DashboardSummary
 import com.antigravity.expensetracker.domain.repository.ExpenseRepository
 import kotlinx.coroutines.Dispatchers
@@ -31,24 +33,44 @@ import java.time.ZoneId
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ExpenseViewModel(
-    private val repository: ExpenseRepository
+    private val repository: ExpenseRepository,
+    private val userPreferences: UserPreferences
 ) : ViewModel() {
 
     private val zoneId = ZoneId.systemDefault()
 
+    // Preferences Flows
+    val monthlyBudget = userPreferences.monthlyBudget
+    val dailyLimit = userPreferences.dailyLimit
+
     // Dashboard State
-    val dashboardUiState: StateFlow<DashboardUiState> = repository.getDashboardSummary()
-        .map<DashboardSummary, DashboardUiState> { DashboardUiState.Success(it) }
-        .catch { emit(DashboardUiState.Error(it.message ?: "Failed to load dashboard")) }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = DashboardUiState.Loading
+    val dashboardUiState: StateFlow<DashboardUiState> = combine(
+        repository.getDashboardSummary(),
+        monthlyBudget,
+        dailyLimit
+    ) { summary, budget, limit ->
+        summary.copy(
+            budgetStatus = BudgetStatus(
+                monthlyBudget = budget,
+                totalSpentThisMonth = summary.totalSpentMonth,
+                dailyLimit = limit
+            )
         )
+    }.map<DashboardSummary, DashboardUiState> { DashboardUiState.Success(it) }
+    .catch { emit(DashboardUiState.Error(it.message ?: "Failed to load dashboard")) }
+    .stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = DashboardUiState.Loading
+    )
 
     // Quick Log Draft
     private val _quickLogDraft = MutableStateFlow(QuickLogDraft())
     val quickLogDraft: StateFlow<QuickLogDraft> = _quickLogDraft.asStateFlow()
+
+    // Edit Item Modal State
+    private val _editingExpense = MutableStateFlow<ExpenseEntity?>(null)
+    val editingExpense: StateFlow<ExpenseEntity?> = _editingExpense.asStateFlow()
 
     // Deleted item for Undo
     private var recentlyDeletedExpense: ExpenseEntity? = null
@@ -162,6 +184,25 @@ class ExpenseViewModel(
             ExpenseEvent.OnResetDraft -> _quickLogDraft.value = QuickLogDraft()
             ExpenseEvent.OnSaveExpense -> saveQuickLogExpense()
 
+            is ExpenseEvent.OnSelectExpenseForEdit -> _editingExpense.value = event.expense
+            is ExpenseEvent.OnUpdateExpense -> {
+                viewModelScope.launch(Dispatchers.IO) {
+                    repository.updateExpense(event.expense)
+                    _editingExpense.value = null
+                    _userMessage.emit("Updated ${event.expense.title}")
+                }
+            }
+
+            is ExpenseEvent.OnUpdateMonthlyBudget -> userPreferences.updateMonthlyBudget(event.budget)
+            is ExpenseEvent.OnUpdateDailyLimit -> userPreferences.updateDailyLimit(event.limit)
+
+            ExpenseEvent.OnClearAllExpenses -> {
+                viewModelScope.launch(Dispatchers.IO) {
+                    repository.deleteAllExpenses()
+                    _userMessage.emit("All expenses cleared. Fresh start ready!")
+                }
+            }
+
             is ExpenseEvent.OnDeleteExpense -> {
                 recentlyDeletedExpense = event.expense
                 viewModelScope.launch(Dispatchers.IO) {
@@ -209,11 +250,9 @@ class ExpenseViewModel(
                     current
                 }
             } else {
-                // Max limit safeguard (e.g. 10 Lakhs max)
                 if (curr.replace(".", "").length >= 7) {
                     return@update current
                 }
-                // Check decimals length
                 if (curr.contains(".") && curr.substringAfter(".").length >= 2) {
                     return@update current
                 }
