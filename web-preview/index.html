@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ExpensePulse — Modern Native Android Expense Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-mode">
+  <div class="app-container">
+    <!-- Status Bar (Android 15 Edge-to-Edge) -->
+    <div class="android-status-bar">
+      <span class="status-time" id="statusTime">09:41</span>
+      <div class="status-icons">
+        <span class="material-symbols-rounded">signal_cellular_4_bar</span>
+        <span class="material-symbols-rounded">wifi</span>
+        <span class="material-symbols-rounded">battery_charging_full</span>
+      </div>
+    </div>
+
+    <!-- Main Screens Container -->
+    <main class="main-content">
+      <!-- TAB 1: DASHBOARD -->
+      <section id="tab-home" class="screen-tab active">
+        <header class="app-header">
+          <div>
+            <h1 class="brand-title">ExpensePulse</h1>
+            <p class="brand-subtitle">Zero-friction spend intelligence</p>
+          </div>
+          <button id="themeToggleBtn" class="icon-btn" title="Toggle Theme">
+            <span class="material-symbols-rounded" id="themeIcon">light_mode</span>
+          </button>
+        </header>
+
+        <!-- Hero Card -->
+        <div class="hero-card">
+          <div class="hero-header">
+            <span class="hero-label">TOTAL SPENT THIS MONTH</span>
+            <span class="delta-badge" id="heroDeltaBadge">
+              <span class="material-symbols-rounded badge-icon" id="heroDeltaIcon">trending_up</span>
+              <span id="heroDeltaText">+12% vs y'day</span>
+            </span>
+          </div>
+          <div class="hero-amount" id="heroTotalMonth">₹0</div>
+          <div class="hero-submetrics">
+            <div class="submetric-item">
+              <span class="material-symbols-rounded text-primary">calendar_today</span>
+              <div>
+                <span class="submetric-label">Today</span>
+                <span class="submetric-val" id="heroTodaySpend">₹0</span>
+              </div>
+            </div>
+            <div class="submetric-divider"></div>
+            <div class="submetric-item">
+              <span class="material-symbols-rounded text-tertiary">history</span>
+              <div>
+                <span class="submetric-label">7-Day Total</span>
+                <span class="submetric-val" id="hero7DaySpend">₹0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Budget Progress Card -->
+        <div class="budget-card">
+          <div class="budget-header">
+            <div class="budget-title-row">
+              <span class="budget-title">Monthly Budget</span>
+              <span class="material-symbols-rounded text-warning alert-icon" id="budgetAlertIcon" style="display: none;">warning</span>
+            </div>
+            <span class="budget-percent" id="budgetPercent">0% Used</span>
+          </div>
+          <div class="budget-body">
+            <div class="progress-ring-box">
+              <svg class="progress-ring" width="56" height="56">
+                <circle class="ring-bg" stroke="currentColor" stroke-width="6" fill="transparent" r="22" cx="28" cy="28" />
+                <circle class="ring-indicator" id="ringIndicator" stroke="currentColor" stroke-width="6" fill="transparent" r="22" cx="28" cy="28" stroke-linecap="round" />
+              </svg>
+            </div>
+            <div class="budget-stats">
+              <div class="stat-row">
+                <span>Remaining:</span>
+                <strong id="budgetRemaining">₹35,000</strong>
+              </div>
+              <div class="stat-row text-muted">
+                <span>Budget Cap:</span>
+                <span>₹35,000</span>
+              </div>
+              <p class="budget-warning-text" id="budgetWarningText" style="display: none;"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 7-Day Spending Bar Chart -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <span class="chart-title">7-Day Spending Trend</span>
+              <span class="chart-subtitle">Tap a bar to inspect category split</span>
+            </div>
+            <div class="chart-limit-legend">
+              <span class="legend-dot"></span>
+              <span>Limit: ₹1,200</span>
+            </div>
+          </div>
+          <div class="chart-container">
+            <canvas id="barChartCanvas" width="340" height="160"></canvas>
+          </div>
+          <div id="chartDetailOverlay" class="chart-detail-box" style="display: none;">
+            <div class="detail-header">
+              <span id="detailDate">Mon, 18 Aug</span>
+              <strong id="detailTotal" class="text-primary">₹0</strong>
+            </div>
+            <div id="detailChips" class="detail-chips-row"></div>
+          </div>
+        </div>
+
+        <!-- Recent Transactions -->
+        <div class="section-header">
+          <span class="section-title">Recent Transactions</span>
+          <button class="text-btn" id="viewAllBtn">View All</button>
+        </div>
+        <div class="transactions-list" id="recentTransactionsList"></div>
+      </section>
+
+      <!-- TAB 2: CALENDAR INSPECTOR -->
+      <section id="tab-calendar" class="screen-tab">
+        <header class="app-header">
+          <div>
+            <h1 class="brand-title">Spending Calendar</h1>
+            <p class="brand-subtitle">Tap any date to inspect daily itemized expenses</p>
+          </div>
+        </header>
+
+        <!-- Calendar Component -->
+        <div class="calendar-card">
+          <div class="calendar-nav">
+            <button id="prevMonthBtn" class="icon-btn"><span class="material-symbols-rounded">chevron_left</span></button>
+            <span id="currentMonthYear" class="calendar-month-title">August 2026</span>
+            <button id="nextMonthBtn" class="icon-btn"><span class="material-symbols-rounded">chevron_right</span></button>
+          </div>
+          <div class="calendar-weekdays">
+            <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+          </div>
+          <div id="calendarDaysGrid" class="calendar-grid"></div>
+        </div>
+
+        <!-- Selected Date Hero Summary Card -->
+        <div class="calendar-hero-card">
+          <span class="hero-label" id="calendarSelectedDateLabel">SELECTED DATE</span>
+          <div class="calendar-hero-body">
+            <div>
+              <div class="calendar-day-total" id="calendarSelectedDayTotal">₹0</div>
+              <span class="hero-desc">Total spent on this day</span>
+            </div>
+            <span class="count-badge" id="calendarSelectedDayCount">0 items</span>
+          </div>
+        </div>
+
+        <!-- Itemized Breakdown for Selected Date -->
+        <div class="section-header">
+          <span class="section-title">Itemized Daily Breakdown</span>
+        </div>
+        <div class="transactions-list" id="calendarDateTransactionsList"></div>
+      </section>
+
+      <!-- TAB 3: HISTORY & SEARCH -->
+      <section id="tab-history" class="screen-tab">
+        <header class="app-header">
+          <div>
+            <h1 class="brand-title">Expense History</h1>
+            <p class="brand-subtitle">Filtered Total: <strong id="historyFilteredTotal" class="text-primary">₹0</strong></p>
+          </div>
+          <button id="exportCsvBtn" class="outline-btn">
+            <span class="material-symbols-rounded">file_download</span>
+            <span>Export CSV</span>
+          </button>
+        </header>
+
+        <!-- Search Bar -->
+        <div class="search-box">
+          <span class="material-symbols-rounded text-muted">search</span>
+          <input type="text" id="historySearchInput" placeholder="Search transactions by title or notes..." />
+          <button id="searchClearBtn" class="icon-btn-sm" style="display: none;">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+
+        <!-- Date Range Filter Chips -->
+        <div class="chips-scroll">
+          <button class="filter-chip active" data-range="THIS_MONTH">This Month</button>
+          <button class="filter-chip" data-range="THIS_WEEK">This Week</button>
+          <button class="filter-chip" data-range="ALL_TIME">All Time</button>
+        </div>
+
+        <!-- Category Filter Chips -->
+        <div class="chips-scroll" id="categoryFilterRow"></div>
+
+        <!-- Transactions List -->
+        <div class="transactions-list" id="historyTransactionsList" style="margin-top: 14px;"></div>
+      </section>
+    </main>
+
+    <!-- Floating Action Button -->
+    <button id="openQuickLogFab" class="fab-btn" title="Log Expense in 3 seconds">
+      <span class="material-symbols-rounded">add</span>
+    </button>
+
+    <!-- Bottom Navigation Bar (Material 3) -->
+    <nav class="bottom-nav">
+      <button class="nav-item active" data-tab="tab-home">
+        <span class="material-symbols-rounded">dashboard</span>
+        <span>Dashboard</span>
+      </button>
+      <button class="nav-item" data-tab="tab-calendar">
+        <span class="material-symbols-rounded">calendar_month</span>
+        <span>Calendar</span>
+      </button>
+      <button class="nav-item" data-tab="tab-history">
+        <span class="material-symbols-rounded">history</span>
+        <span>History</span>
+      </button>
+    </nav>
+
+    <!-- Quick Log Bottom Sheet Modal -->
+    <div id="quickLogModal" class="bottom-sheet-backdrop">
+      <div class="bottom-sheet">
+        <div class="sheet-drag-handle"></div>
+        <div class="sheet-content">
+          <!-- Currency Display -->
+          <div class="numpad-display">
+            <span class="currency-symbol">₹</span>
+            <span id="numpadAmountDisplay" class="numpad-amount">0</span>
+          </div>
+
+          <!-- Category Chips -->
+          <div class="sheet-chips-label">SELECT CATEGORY</div>
+          <div class="chips-scroll" id="quickCategoryChips"></div>
+
+          <!-- Payment Mode Chips -->
+          <div class="sheet-chips-label" style="margin-top: 10px;">PAYMENT MODE</div>
+          <div class="chips-scroll" id="quickPaymentChips"></div>
+
+          <!-- Optional Title -->
+          <input type="text" id="quickTitleInput" class="text-input" placeholder="Title (Optional, e.g. Starbucks Latte)" />
+
+          <!-- Custom Large Number Pad -->
+          <div class="numpad-grid">
+            <button class="num-key" data-key="1">1</button>
+            <button class="num-key" data-key="2">2</button>
+            <button class="num-key" data-key="3">3</button>
+            <button class="num-key" data-key="4">4</button>
+            <button class="num-key" data-key="5">5</button>
+            <button class="num-key" data-key="6">6</button>
+            <button class="num-key" data-key="7">7</button>
+            <button class="num-key" data-key="8">8</button>
+            <button class="num-key" data-key="9">9</button>
+            <button class="num-key" data-key=".">.</button>
+            <button class="num-key" data-key="0">0</button>
+            <button class="num-key" data-key="DEL"><span class="material-symbols-rounded">backspace</span></button>
+          </div>
+
+          <!-- Save Button -->
+          <button id="quickSaveBtn" class="primary-btn" disabled>
+            <span class="material-symbols-rounded">check</span>
+            <span id="quickSaveBtnText">Enter Amount</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Snackbar -->
+    <div id="snackbar" class="snackbar">
+      <span id="snackbarText">Message</span>
+      <button id="snackbarUndoBtn" class="snackbar-action">UNDO</button>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
