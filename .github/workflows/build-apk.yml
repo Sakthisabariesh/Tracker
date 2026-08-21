@@ -21,34 +21,30 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: gradle
 
-      - name: Setup Gradle
+      - name: Setup Gradle 8.9
         uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.9'
 
-      - name: Make Gradlew Executable
+      - name: Generate Wrapper and Build APK
         run: |
-          chmod +x ./gradlew || true
-          if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
-            echo "Generating Gradle wrapper files..."
-            gradle wrapper --gradle-version 8.9
-          fi
+          gradle wrapper --gradle-version 8.9
           chmod +x ./gradlew
-
-      - name: Build Android Debug APK
-        run: ./gradlew assembleDebug --stacktrace
+          ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Upload Debug APK Artifact
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: ExpensePulse-Debug-APK
           path: app/build/outputs/apk/debug/*.apk
           retention-days: 30
 
       - name: Display Build Summary
+        if: success()
         run: |
           echo "### 🎉 Android APK Build Successful!" >> $GITHUB_STEP_SUMMARY
-          echo "You can download the APK from the **Artifacts** section at the bottom of this workflow run." >> $GITHUB_STEP_SUMMARY
-          echo "- **App Name**: ExpensePulse" >> $GITHUB_STEP_SUMMARY
-          echo "- **Build Type**: Debug APK" >> $GITHUB_STEP_SUMMARY
-          echo "- **Target Architecture**: Universal (OnePlus 13R & Android 15/16 ready)" >> $GITHUB_STEP_SUMMARY
+          echo "Download the APK directly from the **Artifacts** section below." >> $GITHUB_STEP_SUMMARY
+          echo "- **App**: ExpensePulse" >> $GITHUB_STEP_SUMMARY
+          echo "- **Type**: Debug APK" >> $GITHUB_STEP_SUMMARY
