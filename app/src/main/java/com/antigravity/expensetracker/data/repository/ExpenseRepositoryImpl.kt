@@ -77,6 +77,13 @@ class ExpenseRepositoryImpl(
         }
     }
 
+    private data class MonthlyTotals(
+        val monthExpense: Double,
+        val monthIncome: Double,
+        val todayTotal: Double,
+        val yesterdayTotal: Double
+    )
+
     override fun getDashboardSummary(): Flow<DashboardSummary> {
         val today = LocalDate.now()
         val startOfMonth = today.withDayOfMonth(1).atStartOfDay(zoneId).toInstant()
@@ -92,21 +99,23 @@ class ExpenseRepositoryImpl(
         val sevenDaysAgo = today.minusDays(6)
         val startOfSevenDays = sevenDaysAgo.atStartOfDay(zoneId).toInstant()
 
-        val monthExpenseFlow = dao.getTotalSpentBetween(startOfMonth, endOfMonth)
-        val monthIncomeFlow = dao.getTotalIncomeBetween(startOfMonth, endOfMonth)
-        val todayTotalFlow = dao.getTotalSpentBetween(startOfToday, endOfToday)
-        val yesterdayTotalFlow = dao.getTotalSpentBetween(startOfYesterday, endOfYesterday)
+        val totalsFlow = combine(
+            dao.getTotalSpentBetween(startOfMonth, endOfMonth),
+            dao.getTotalIncomeBetween(startOfMonth, endOfMonth),
+            dao.getTotalSpentBetween(startOfToday, endOfToday),
+            dao.getTotalSpentBetween(startOfYesterday, endOfYesterday)
+        ) { monthExpense, monthIncome, todayTotal, yesterdayTotal ->
+            MonthlyTotals(monthExpense, monthIncome, todayTotal, yesterdayTotal)
+        }
+
         val sevenDaysExpensesFlow = dao.getExpensesBetween(startOfSevenDays, endOfToday)
         val recentFlow = dao.getRecentExpenses(6)
 
         return combine(
-            monthExpenseFlow,
-            monthIncomeFlow,
-            todayTotalFlow,
-            yesterdayTotalFlow,
+            totalsFlow,
             sevenDaysExpensesFlow,
             recentFlow
-        ) { monthExpense, monthIncome, todayTotal, yesterdayTotal, sevenDaysExpenses, recentExpenses ->
+        ) { totals, sevenDaysExpenses, recentExpenses ->
 
             val onlyExpenses7Days = sevenDaysExpenses.filter { it.type == TransactionType.EXPENSE }
 
@@ -136,15 +145,15 @@ class ExpenseRepositoryImpl(
             val runningTotal7Days = onlyExpenses7Days.sumOf { it.amount }
             val budgetStatus = BudgetStatus(
                 monthlyBudget = 35000.0,
-                totalSpentThisMonth = monthExpense,
+                totalSpentThisMonth = totals.monthExpense,
                 dailyLimit = 1200.0
             )
 
             DashboardSummary(
-                totalSpentMonth = monthExpense,
-                totalIncomeMonth = monthIncome,
-                todaySpent = todayTotal,
-                yesterdaySpent = yesterdayTotal,
+                totalSpentMonth = totals.monthExpense,
+                totalIncomeMonth = totals.monthIncome,
+                todaySpent = totals.todayTotal,
+                yesterdaySpent = totals.yesterdayTotal,
                 runningTotal7Days = runningTotal7Days,
                 budgetStatus = budgetStatus,
                 weeklyTrend = dailySpendingList,
