@@ -25,6 +25,14 @@ class ExpenseRepositoryImpl(
     private val dao: ExpenseDao
 ) : ExpenseRepository {
 
+    private data class DashboardTotals(
+        val monthExpense: Double,
+        val monthIncome: Double,
+        val todayTotal: Double,
+        val yesterdayTotal: Double,
+        val sevenDaysExpenses: List<ExpenseEntity>
+    )
+
     private val zoneId = ZoneId.systemDefault()
 
     override suspend fun insertExpense(expense: ExpenseEntity): Long = dao.insertExpense(expense)
@@ -99,14 +107,28 @@ class ExpenseRepositoryImpl(
         val sevenDaysExpensesFlow = dao.getExpensesBetween(startOfSevenDays, endOfToday)
         val recentFlow = dao.getRecentExpenses(6)
 
-        return combine(
+        val dashboardTotalsFlow = combine(
             monthExpenseFlow,
             monthIncomeFlow,
             todayTotalFlow,
             yesterdayTotalFlow,
             sevenDaysExpensesFlow,
-            recentFlow
-        ) { monthExpense, monthIncome, todayTotal, yesterdayTotal, sevenDaysExpenses, recentExpenses ->
+        ) { monthExpense, monthIncome, todayTotal, yesterdayTotal, sevenDaysExpenses ->
+            DashboardTotals(
+                monthExpense = monthExpense,
+                monthIncome = monthIncome,
+                todayTotal = todayTotal,
+                yesterdayTotal = yesterdayTotal,
+                sevenDaysExpenses = sevenDaysExpenses
+            )
+        }
+
+        return combine(dashboardTotalsFlow, recentFlow) { dashboardTotals, recentExpenses ->
+            val monthExpense = dashboardTotals.monthExpense
+            val monthIncome = dashboardTotals.monthIncome
+            val todayTotal = dashboardTotals.todayTotal
+            val yesterdayTotal = dashboardTotals.yesterdayTotal
+            val sevenDaysExpenses = dashboardTotals.sevenDaysExpenses
 
             val onlyExpenses7Days = sevenDaysExpenses.filter { it.type == TransactionType.EXPENSE }
 
